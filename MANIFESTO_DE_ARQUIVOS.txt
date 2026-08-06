@@ -1,0 +1,29 @@
+VERSA CONCURSOS — PACOTE COMPLETO DO SITE
+
+Arquivos incluídos:
+
+1. index.html
+   Página principal e aplicação completa do Versa Concursos.
+   Contém a interface, estilos, dados das trilhas e lógica de funcionamento.
+
+2. README.md
+   Documentação completa do projeto, trilhas, funcionalidades, instalação,
+   publicação no GitHub Pages, limitações e manutenção.
+
+3. logo.svg
+   Logotipo vetorial utilizado pelo site.
+
+4. .nojekyll
+   Arquivo necessário para impedir que o GitHub Pages processe o projeto
+   com Jekyll. Deve permanecer na raiz do repositório.
+
+5. MANIFESTO_DE_ARQUIVOS.txt
+   Este documento, com a descrição do conteúdo do pacote.
+
+PUBLICAÇÃO NO GITHUB PAGES
+
+Extraia o ZIP e envie todos os arquivos para a raiz da branch principal do
+repositório. Em Settings > Pages, selecione Deploy from a branch, escolha a
+branch main e a pasta /(root).
+
+O projeto é estático e não exige instalação, compilação ou servidor próprio.
