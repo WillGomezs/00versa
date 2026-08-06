@@ -27,3 +27,12 @@ repositório. Em Settings > Pages, selecione Deploy from a branch, escolha a
 branch main e a pasta /(root).
 
 O projeto é estático e não exige instalação, compilação ou servidor próprio.
+
+ÍCONES E IDENTIDADE VISUAL
+- logo.svg: logotipo usado dentro da interface.
+- favicon.svg: ícone vetorial da aba do navegador.
+- favicon-32x32.png: alternativa PNG para navegadores.
+- favicon.ico: alternativa clássica para favicon.
+- apple-touch-icon.png: ícone para atalhos em dispositivos Apple.
+- favicon-192x192.png: ícone do manifesto/PWA.
+- site.webmanifest: identidade e configuração básica para instalação do site.

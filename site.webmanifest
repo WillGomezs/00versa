@@ -1,0 +1,16 @@
+{
+  "name": "Versa Concursos",
+  "short_name": "Versa",
+  "description": "Plataforma gratuita de estudo para as trilhas DATAPREV e ASON.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f2",
+  "theme_color": "#326a64",
+  "icons": [
+    {
+      "src": "./favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
