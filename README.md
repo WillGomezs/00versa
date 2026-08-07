@@ -2,12 +2,14 @@
 
 Plataforma gratuita de estudos por trilhas, inspirada em sistemas de aprendizagem progressiva, criada para organizar a preparação para concursos e processos seletivos em microlições, exercícios, revisões e simulados.
 
-A versão atual reúne duas trilhas independentes:
+A versão atual reúne quatro trilhas independentes:
 
 - **DATAPREV 2026 — Analista de Tecnologia da Informação, Perfil 5: Segurança Cibernética e Proteção de Dados**;
-- **ASON 2027 — Curso de Adaptação a Segundo Oficial de Náutica da Marinha Mercante**, usando o edital e o Anexo II de 2026 como referência provisória até a publicação do processo seletivo oficial de 2027.
+- **ASON 2027 — Curso de Adaptação a Segundo Oficial de Náutica da Marinha Mercante**, usando o edital e o Anexo II de 2026 como referência provisória até a publicação do processo seletivo oficial de 2027;
+- **IBGE 2026 — Analista Censitário, área de Ciências Sociais/Antropologia**, conforme o PSS nº 02/2026;
+- **CFAQ-MOC Nacional — Curso de Formação de Aquaviários — Moço de Convés**, com núcleo comum de Português e Matemática e banco histórico de processos locais.
 
-> **Aviso:** este é um projeto educacional independente. Não possui vínculo oficial com a DATAPREV, a Fundação Getulio Vargas, a Marinha do Brasil, o CIAGA, a DPC, cursos preparatórios ou canais do YouTube indicados na plataforma.
+> **Aviso:** este é um projeto educacional independente. Não possui vínculo oficial com a DATAPREV, a Fundação Getulio Vargas, a Marinha do Brasil, o CIAGA, a DPC, o IBGE, o Instituto Avalia, cursos preparatórios ou canais do YouTube indicados na plataforma.
 
 ---
 
@@ -39,9 +41,11 @@ Todo o projeto funciona como um site estático e pode ser publicado gratuitament
 |---|---:|---:|---:|---:|---:|
 | DATAPREV | 23 | 133 | 258 | 50 | 40 questões |
 | ASON | 20 | 80 | 160 | 50 | 28 questões |
-| **Total** | **43** | **213** | **418** | **100** | — |
+| IBGE | 19 | 98 | 327 | 80 | 39 questões |
+| CFAQ-MOC | 10 | 30 | 406 | 17 | 30 questões |
+| **Total** | **72** | **341** | **1.151** | **197** | — |
 
-Os números representam o conteúdo disponível na versão 5. O banco poderá crescer com novas questões, provas anteriores comentadas, revisões editoriais e atualizações de legislação e atualidades.
+Os números representam o conteúdo disponível na versão multitrilhas com a inclusão do IBGE. O banco poderá crescer com novas questões, provas anteriores comentadas, revisões editoriais e atualizações de legislação e atualidades.
 
 ---
 
@@ -84,7 +88,7 @@ Cada microlição procura trabalhar um recorte pequeno do conteúdo. Ela pode co
 
 ### Questões comentadas
 
-As questões apresentam cinco alternativas e uma explicação do gabarito. Ao errar, o item pode ser enviado ao **caderno de erros**, permitindo que o conteúdo volte para revisão.
+As questões apresentam quatro ou cinco alternativas, conforme a estrutura preservada da fonte, e uma explicação do gabarito. Ao errar, o item pode ser enviado ao **caderno de erros**, permitindo que o conteúdo volte para revisão.
 
 As questões autorais foram criadas para fixação e aproximação ao estilo dos processos seletivos. Elas não devem ser tratadas como questões oficiais das bancas.
 
@@ -101,7 +105,9 @@ Os erros ficam registrados por trilha e podem ser revisitados posteriormente. O 
 Cada curso possui seu próprio diagnóstico:
 
 - **DATAPREV:** 40 questões distribuídas entre as áreas da trilha;
-- **ASON:** 28 questões de Português, Inglês, Matemática e Física.
+- **ASON:** 28 questões de Português, Inglês, Matemática e Física;
+- **IBGE:** 39 questões distribuídas entre Português, Raciocínio Lógico Quantitativo e Conhecimentos Específicos;
+- **CFAQ-MOC:** 30 questões, uma por microlição, distribuídas entre Português e Matemática.
 
 O diagnóstico identifica a base inicial do aluno, mas não bloqueia módulos.
 
@@ -323,6 +329,130 @@ O simulado permite navegar entre questões, marcar itens para revisão, deixar r
 
 ---
 
+# Trilha IBGE 2026
+
+## Público-alvo
+
+A trilha é destinada à função de **Analista Censitário — Ciências Sociais/Antropologia**, do Processo Seletivo Simplificado nº 02/2026 do IBGE. O requisito informado no Anexo II é graduação completa em Ciências Sociais, Sociologia ou Antropologia.
+
+## Estrutura da prova
+
+| Disciplina | Questões |
+|---|---:|
+| Língua Portuguesa | 15 |
+| Raciocínio Lógico Quantitativo | 10 |
+| Conhecimentos Específicos | 35 |
+| **Total** | **60** |
+
+A duração prevista é de quatro horas. Para Analista, o edital estabelece mínimo de 40% do total da prova e pelo menos um acerto em cada disciplina.
+
+## Conteúdo da trilha
+
+A rota possui 19 módulos e 98 microlições, cobrindo:
+
+- interpretação, gramática, sintaxe e comunicação operacional;
+- lógica proposicional, argumentação, aritmética, álgebra e geometria;
+- significação das palavras: sinonímia, antonímia, homonímia e paronímia;
+- cultura popular, nacional e de massa;
+- estratificação, mobilidade, trabalho e inserção produtiva;
+- Estado, Federação, políticas públicas, representação e movimentos sociais;
+- direitos humanos, cidadania e diversidades;
+- Sociologia como autoconsciência da sociedade e imaginação sociológica;
+- teorias antropológicas contemporâneas;
+- etnografia, observação participante, entrevistas, ética e pesquisa de campo;
+- formação da antropologia brasileira, estudos afro-brasileiros e etnologia indígena;
+- etnicidade, contato interétnico, desigualdades raciais, tutela e associativismo;
+- territorialização indígena e quilombola, patrimonialização e PCTs;
+- pobreza, exclusão e grupos sociodemográficos;
+- fecundidade, mortalidade, migração, urbanização e estrutura etária;
+- média, mediana, quartis, variância, desvio padrão, coeficiente de variação e histogramas;
+- população, amostra, representatividade, viés de cobertura e não resposta;
+- números-índices e medidas de concentração;
+- Constituição Federal, Convenções OIT 107 e 169, Decreto nº 4.887/2003, Estatuto do Índio e Estatuto da Igualdade Racial;
+- ocupações de terra, urbano/rural, rural/agrário e contexto operacional do IBGE.
+
+## Materiais e prova histórica
+
+O pacote inclui o edital de abertura, os Anexos II e IV, o material de conhecimentos básicos do 12º Censo Agropecuário e a prova de Ciências Sociais de 2019 com gabaritos e pareceres. O Anexo III — Conteúdos Programáticos permanece vinculado à cópia oficial no servidor do IBGE, e sua matriz completa foi transcrita pedagogicamente no arquivo `MATRIZ_CURRICULAR_IBGE.md` e na própria trilha. A prova de 2019 é usada como referência histórica, pois a banca de 2026 é o Instituto Avalia. Nesta versão, 32 questões textuais oficiais foram integradas ao banco com o gabarito definitivo retificado; as questões 23 e 24 não foram integradas por dependerem de figuras, e a questão 41 foi anulada.
+
+## Simulados IBGE
+
+A plataforma oferece:
+
+- Português — 15 questões;
+- Raciocínio Lógico Quantitativo — 10 questões;
+- Conhecimentos Específicos — 35 questões;
+- prova completa — 60 questões e cronômetro de quatro horas;
+- bloco histórico IBGE 2019 — 32 questões oficiais textuais e cronômetro de duas horas.
+
+Questões e alternativas são embaralhadas, com navegação livre, marcação para revisão, respostas em branco e relatório por disciplina.
+
+---
+
+## Expansão pedagógica IBGE v2
+
+A versão v2 prioriza retenção e variedade de prática:
+
+- todas as 97 microlições anteriores receberam uma terceira questão de consolidação;
+- foi criada a microlição **População, amostra e representatividade**, com quatro questões próprias;
+- 32 questões oficiais textuais da prova de 2019 foram incorporadas;
+- o banco IBGE passou de 194 para 327 questões;
+- todas as alternativas incorretas possuem feedback individual;
+- dois pré-requisitos invertidos foram corrigidos;
+- foram adicionadas 12 videoaulas diretas sobre demografia, pobreza, estatística, movimentos sociais, PCTs, povos indígenas, patrimônio e legislação.
+
+---
+
+# Trilha CFAQ-MOC Nacional
+
+## Público-alvo e escopo
+
+A trilha é destinada exclusivamente à preparação para processos seletivos do **Curso de Formação de Aquaviários — Moço de Convés (CFAQ-MOC)**. Conteúdos ASON, CFAQ-MOM e o conjunto “CPRJ Fundamental 2025” da fonte original não foram incorporados.
+
+A expressão “todas as Capitanias” representa abrangência nacional. Como os processos são publicados por diferentes Capitanias, Delegacias e Agências, datas, vagas, duração, etapas, requisitos e critérios devem ser confirmados no edital do Órgão de Execução responsável.
+
+## Estrutura pedagógica
+
+| Disciplina | Módulos | Microlições |
+|---|---:|---:|
+| Português | 5 | 15 |
+| Matemática | 5 | 15 |
+| **Total** | **10** | **30** |
+
+O banco ativo contém **406 questões** distribuídas tematicamente entre as 30 microlições. Cada lição exibe cinco questões comentadas para preservar uma sessão curta; as demais continuam disponíveis nos simulados e treinos por disciplina. Cada microlição possui objetivo, resumo, pontos essenciais, exemplo, recuperação ativa, pré-requisitos e, quando aplicável, videoaula complementar.
+
+## Importação e auditoria
+
+O arquivo-fonte possuía 430 questões identificadas como CFAQ. A importação:
+
+- omitiu 18 duplicatas exatas do banco ativo;
+- omitiu seis questões anuladas ou sem gabarito válido;
+- resolveu 17 textos-base sem pendências;
+- extraiu 21 imagens únicas para arquivos externos;
+- preservou questões com quatro ou cinco alternativas;
+- manteve 11 rótulos históricos de prova, dos anos de 2023 a 2026;
+- não converteu as letras A/B/C/D/R/I/M em nomes de Capitanias sem comprovação documental.
+
+## Simulados CFAQ-MOC
+
+A plataforma oferece:
+
+- Português — 20 questões;
+- Matemática — 20 questões;
+- CFAQ-MOC completo — 40 questões, sendo 20 de cada disciplina;
+- revisão nacional ampliada — 80 questões;
+- reprodução de cada conjunto histórico disponível.
+
+O cronômetro dos modos CFAQ-MOC é uma referência de treino. O edital local prevalece sobre qualquer duração ou distribuição exibida na plataforma.
+
+## Arquitetura da nova trilha
+
+Os dados CFAQ-MOC ficam em `cfaq-data.js`, carregados por script clássico antes da aplicação principal. Imagens ficam em `assets/cfaq/`. Essa separação preserva abertura local por `file://`, não utiliza `fetch()` e evita incorporar vários megabytes de imagens ao `index.html`.
+
+O progresso usa a chave `versa-progress-cfaq`, isolada das outras três trilhas.
+
+---
+
 ## Videoaulas
 
 As videoaulas são materiais complementares. Elas não substituem a explicação, os exercícios ou a leitura de fontes oficiais.
@@ -337,7 +467,7 @@ Cada recurso pode registrar:
 - justificativa da curadoria;
 - link direto para o YouTube.
 
-Alguns tópicos muito específicos não possuem uma aula individual gratuita, estável e em português que tenha sido validada. Nesses casos, a plataforma apresenta uma **coleção de busca direcionada**, identificada como tal.
+Alguns tópicos muito específicos não possuem uma aula individual gratuita, estável e em português que tenha sido validada. Nesses casos, a plataforma apresenta uma **coleção de busca direcionada**, identificada como tal. Na trilha IBGE, o catálogo atual contém 24 vídeos com reprodução direta, 12 canais ou coleções institucionais e 44 buscas temáticas direcionadas; estas últimas exigem seleção crítica do aluno e não são apresentadas como aulas individualmente validadas.
 
 A disponibilidade dos vídeos depende do YouTube e dos respectivos canais. Um vídeo pode ser removido, tornar-se privado ou mudar de endereço.
 
@@ -382,10 +512,15 @@ A maior parte do CSS, do JavaScript e dos dados das trilhas está incorporada ao
 ## Estrutura de arquivos
 
 ```text
-versa-concursos-v5-completo/
+versa-concursos-multitrilhas/
 ├── index.html    # Aplicação, estilos, lógica e conteúdo das trilhas
 ├── logo.svg      # Identidade visual usada pelo site
 ├── README.md     # Documentação do projeto
+├── MATRIZ_CURRICULAR_IBGE.md
+├── MAPEAMENTO_EDITAL_IBGE.md
+├── CURADORIA_DE_MATERIAIS_IBGE.md
+├── RELATORIO_VALIDACAO_IBGE.md
+├── documentos/ibge/ # Editais, anexos, prova e materiais de referência
 └── .nojekyll     # Impede processamento desnecessário pelo Jekyll
 ```
 
@@ -522,24 +657,38 @@ Para manter o projeto confiável:
 - implementar um painel editorial real;
 - automatizar testes de regressão e validação dos links;
 - acompanhar a publicação do edital ASON 2027;
+- atribuir cada conjunto histórico CFAQ-MOC à Capitania, Delegacia ou Agência somente após conferência documental;
+- ampliar progressivamente o catálogo CFAQ-MOC com editais, provas e gabaritos oficiais de outros Órgãos de Execução;
 - atualizar periodicamente Atualidades, legislação, NIST, MITRE ATT&CK e outros referenciais sujeitos a mudança.
 
 ---
 
-## Validação da versão 5
+## Validação da versão multitrilhas com CFAQ-MOC
 
-A versão foi estruturada para manter independência entre as duas trilhas. As validações realizadas no projeto incluem:
+A versão foi estruturada para manter independência entre as quatro trilhas. As validações realizadas no projeto incluem:
 
 - existência das lições referenciadas pelas questões;
 - existência das questões referenciadas pelas lições;
-- cinco alternativas em cada questão;
+- quatro ou cinco alternativas válidas em cada questão CFAQ-MOC;
 - índices de gabarito válidos;
 - referências de vídeo cadastradas;
 - armazenamento separado por curso;
 - carregamento sem dependências externas obrigatórias;
 - funcionamento do diagnóstico e dos simulados;
 - prova DATAPREV com distribuição e pesos configurados;
-- prova ASON com dez questões por disciplina no modo completo.
+- prova ASON com dez questões por disciplina no modo completo;
+- prova IBGE com 15 questões de Português, 10 de Lógica e 35 específicas;
+- 98 lições, 327 questões e 80 recursos audiovisuais ou coleções na trilha IBGE;
+- 32 questões oficiais de 2019 integradas ao banco;
+- todas as alternativas incorretas da trilha IBGE com comentário;
+- ausência de pré-requisitos apontando para lições posteriores.
+- carregamento do arquivo modular `cfaq-data.js` antes da aplicação principal;
+- 10 módulos, 30 microlições, 406 questões, 30 itens diagnósticos e 17 videoaulas na trilha CFAQ-MOC;
+- 21 imagens e 17 textos-base referenciados por arquivos e IDs válidos;
+- filtros para 11 conjuntos históricos, de 2023 a 2026;
+- ausência de questões ASON ou CFAQ-MOM no banco ativo CFAQ-MOC;
+- 2.083 verificações estruturais automatizadas aprovadas;
+- teste de fluxo em DOM com quatro cursos, trilha, lição e simulado CFAQ-MOC de 40 questões aprovado sem erros de JavaScript.
 
 ---
 

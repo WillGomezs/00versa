@@ -1,0 +1,15 @@
+{
+  "name": "versa-concursos-cfaq-moc-nacional",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ferramentas opcionais de geração e validação da trilha CFAQ-MOC Nacional.",
+  "scripts": {
+    "build:cfaq": "node tools/build-cfaq-course.js",
+    "validate:cfaq": "node tools/validate-cfaq-course.js",
+    "test:dom": "node tools/smoke-test-dom.js",
+    "checksums": "node tools/update-checksums.js"
+  },
+  "devDependencies": {
+    "jsdom": "26.1.0"
+  }
+}

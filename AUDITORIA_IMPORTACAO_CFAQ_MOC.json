@@ -1,0 +1,340 @@
+{
+  "generatedAt": "2026-08-07",
+  "source": "Rota_Naval_original.html",
+  "importedCfaqQuestions": 430,
+  "activeUniqueQuestions": 406,
+  "invalidOrAnnulledOmitted": [
+    {
+      "id": 159,
+      "proof": "CFAQ 2024 A",
+      "correct": 1,
+      "annulled": true
+    },
+    {
+      "id": 433,
+      "proof": "CFAQ 2026 C",
+      "correct": 0,
+      "annulled": true
+    },
+    {
+      "id": 438,
+      "proof": "CFAQ 2026 C",
+      "correct": 0,
+      "annulled": true
+    },
+    {
+      "id": 457,
+      "proof": "CFAQ 2026 D",
+      "correct": null,
+      "annulled": false
+    },
+    {
+      "id": 473,
+      "proof": "CFAQ 2026 D",
+      "correct": null,
+      "annulled": false
+    },
+    {
+      "id": 481,
+      "proof": "CFAQ 2026 D",
+      "correct": null,
+      "annulled": false
+    }
+  ],
+  "exactDuplicatesOmitted": [
+    {
+      "omittedId": 95,
+      "retainedId": 59,
+      "proof": "CFAQ 2023 E"
+    },
+    {
+      "omittedId": 111,
+      "retainedId": 71,
+      "proof": "CFAQ 2023 E"
+    },
+    {
+      "omittedId": 137,
+      "retainedId": 51,
+      "proof": "CFAQ 2024 A"
+    },
+    {
+      "omittedId": 138,
+      "retainedId": 53,
+      "proof": "CFAQ 2024 A"
+    },
+    {
+      "omittedId": 342,
+      "retainedId": 249,
+      "proof": "CFAQ 2024 M"
+    },
+    {
+      "omittedId": 343,
+      "retainedId": 250,
+      "proof": "CFAQ 2024 M"
+    },
+    {
+      "omittedId": 344,
+      "retainedId": 251,
+      "proof": "CFAQ 2024 M"
+    },
+    {
+      "omittedId": 345,
+      "retainedId": 252,
+      "proof": "CFAQ 2024 M"
+    },
+    {
+      "omittedId": 351,
+      "retainedId": 258,
+      "proof": "CFAQ 2024 M"
+    },
+    {
+      "omittedId": 353,
+      "retainedId": 260,
+      "proof": "CFAQ 2024 M"
+    },
+    {
+      "omittedId": 355,
+      "retainedId": 262,
+      "proof": "CFAQ 2024 M"
+    },
+    {
+      "omittedId": 358,
+      "retainedId": 265,
+      "proof": "CFAQ 2024 M"
+    },
+    {
+      "omittedId": 367,
+      "retainedId": 273,
+      "proof": "CFAQ 2024 M"
+    },
+    {
+      "omittedId": 391,
+      "retainedId": 40,
+      "proof": "CFAQ 2026 B"
+    },
+    {
+      "omittedId": 404,
+      "retainedId": 28,
+      "proof": "CFAQ 2026 B"
+    },
+    {
+      "omittedId": 405,
+      "retainedId": 30,
+      "proof": "CFAQ 2026 B"
+    },
+    {
+      "omittedId": 406,
+      "retainedId": 32,
+      "proof": "CFAQ 2026 B"
+    },
+    {
+      "omittedId": 410,
+      "retainedId": 39,
+      "proof": "CFAQ 2026 B"
+    }
+  ],
+  "proofs": [
+    "CFAQ 2023 D",
+    "CFAQ 2023 E",
+    "CFAQ 2024 A",
+    "CFAQ 2024 I",
+    "CFAQ 2024 M",
+    "CFAQ 2024 R",
+    "CFAQ 2025 A",
+    "CFAQ 2026 A",
+    "CFAQ 2026 B",
+    "CFAQ 2026 C",
+    "CFAQ 2026 D"
+  ],
+  "years": [
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "textBasesIncluded": 17,
+  "unresolvedTextBases": [],
+  "imageFiles": 21,
+  "lessons": [
+    {
+      "id": "cfaq-p01",
+      "title": "Estratégias de leitura",
+      "lessonQuestions": 5,
+      "bankQuestions": 17
+    },
+    {
+      "id": "cfaq-p02",
+      "title": "Inferência e informações implícitas",
+      "lessonQuestions": 5,
+      "bankQuestions": 7
+    },
+    {
+      "id": "cfaq-p03",
+      "title": "Gêneros e tipologias textuais",
+      "lessonQuestions": 5,
+      "bankQuestions": 9
+    },
+    {
+      "id": "cfaq-p04",
+      "title": "Coesão e referenciação",
+      "lessonQuestions": 5,
+      "bankQuestions": 10
+    },
+    {
+      "id": "cfaq-p05",
+      "title": "Conectores e relações lógicas",
+      "lessonQuestions": 5,
+      "bankQuestions": 17
+    },
+    {
+      "id": "cfaq-p06",
+      "title": "Semântica e efeitos de sentido",
+      "lessonQuestions": 5,
+      "bankQuestions": 10
+    },
+    {
+      "id": "cfaq-p07",
+      "title": "Fonemas, sílabas e encontros",
+      "lessonQuestions": 5,
+      "bankQuestions": 8
+    },
+    {
+      "id": "cfaq-p08",
+      "title": "Acentuação gráfica",
+      "lessonQuestions": 5,
+      "bankQuestions": 13
+    },
+    {
+      "id": "cfaq-p09",
+      "title": "Ortografia, hífen e formação",
+      "lessonQuestions": 5,
+      "bankQuestions": 8
+    },
+    {
+      "id": "cfaq-p10",
+      "title": "Substantivos, artigos e adjetivos",
+      "lessonQuestions": 5,
+      "bankQuestions": 19
+    },
+    {
+      "id": "cfaq-p11",
+      "title": "Pronomes, preposições e advérbios",
+      "lessonQuestions": 5,
+      "bankQuestions": 14
+    },
+    {
+      "id": "cfaq-p12",
+      "title": "Verbos, tempos e vozes",
+      "lessonQuestions": 5,
+      "bankQuestions": 23
+    },
+    {
+      "id": "cfaq-p13",
+      "title": "Termos da oração e períodos",
+      "lessonQuestions": 5,
+      "bankQuestions": 27
+    },
+    {
+      "id": "cfaq-p14",
+      "title": "Concordância, regência e crase",
+      "lessonQuestions": 5,
+      "bankQuestions": 8
+    },
+    {
+      "id": "cfaq-p15",
+      "title": "Pontuação e organização sintática",
+      "lessonQuestions": 5,
+      "bankQuestions": 14
+    },
+    {
+      "id": "cfaq-m01",
+      "title": "Números e operações",
+      "lessonQuestions": 5,
+      "bankQuestions": 8
+    },
+    {
+      "id": "cfaq-m02",
+      "title": "Potências e raízes",
+      "lessonQuestions": 5,
+      "bankQuestions": 10
+    },
+    {
+      "id": "cfaq-m03",
+      "title": "Frações e decimais",
+      "lessonQuestions": 5,
+      "bankQuestions": 14
+    },
+    {
+      "id": "cfaq-m04",
+      "title": "Divisibilidade, MMC e MDC",
+      "lessonQuestions": 5,
+      "bankQuestions": 16
+    },
+    {
+      "id": "cfaq-m05",
+      "title": "Razões, proporções e regra de três",
+      "lessonQuestions": 5,
+      "bankQuestions": 12
+    },
+    {
+      "id": "cfaq-m06",
+      "title": "Porcentagem e matemática financeira",
+      "lessonQuestions": 5,
+      "bankQuestions": 18
+    },
+    {
+      "id": "cfaq-m07",
+      "title": "Expressões algébricas e polinômios",
+      "lessonQuestions": 5,
+      "bankQuestions": 8
+    },
+    {
+      "id": "cfaq-m08",
+      "title": "Equações e sistemas do 1º grau",
+      "lessonQuestions": 5,
+      "bankQuestions": 9
+    },
+    {
+      "id": "cfaq-m09",
+      "title": "Equação do 2º grau, funções e gráficos",
+      "lessonQuestions": 5,
+      "bankQuestions": 13
+    },
+    {
+      "id": "cfaq-m10",
+      "title": "Ângulos, retas e proporcionalidade geométrica",
+      "lessonQuestions": 5,
+      "bankQuestions": 15
+    },
+    {
+      "id": "cfaq-m11",
+      "title": "Geometria plana: perímetros e áreas",
+      "lessonQuestions": 5,
+      "bankQuestions": 34
+    },
+    {
+      "id": "cfaq-m12",
+      "title": "Volumes, escalas e conversão de unidades",
+      "lessonQuestions": 5,
+      "bankQuestions": 20
+    },
+    {
+      "id": "cfaq-m13",
+      "title": "Conjuntos e inclusão-exclusão",
+      "lessonQuestions": 5,
+      "bankQuestions": 11
+    },
+    {
+      "id": "cfaq-m14",
+      "title": "Contagem, lógica e probabilidade",
+      "lessonQuestions": 5,
+      "bankQuestions": 6
+    },
+    {
+      "id": "cfaq-m15",
+      "title": "Médias, tabelas e interpretação de dados",
+      "lessonQuestions": 5,
+      "bankQuestions": 8
+    }
+  ]
+}

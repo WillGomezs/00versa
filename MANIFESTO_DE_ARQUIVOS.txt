@@ -1,38 +1,108 @@
-VERSA CONCURSOS — PACOTE COMPLETO DO SITE
+VERSA CONCURSOS — PACOTE MULTITRILHAS COMPLETO
 
-Arquivos incluídos:
+TRILHAS INCLUÍDAS
+- DATAPREV 2026 — Segurança Cibernética e Proteção de Dados.
+- ASON 2027 — baseada no programa de 2026 até a publicação do edital oficial de 2027.
+- IBGE 2026 — Analista Censitário — Ciências Sociais/Antropologia.
+- CFAQ-MOC Nacional — Moço de Convés — todas as Capitanias.
 
+ARQUIVOS PRINCIPAIS
 1. index.html
-   Página principal e aplicação completa do Versa Concursos.
-   Contém a interface, estilos, dados das trilhas e lógica de funcionamento.
+   Aplicação completa, interface, estilos, dados das trilhas DATAPREV, ASON e IBGE, integração CFAQ-MOC e lógica de funcionamento.
 
-2. README.md
-   Documentação completa do projeto, trilhas, funcionalidades, instalação,
-   publicação no GitHub Pages, limitações e manutenção.
+2. cfaq-data.js
+   Dados modulares da trilha CFAQ-MOC Nacional: módulos, microlições, questões, textos-base, vídeos e referências.
 
-3. logo.svg
-   Logotipo vetorial utilizado pelo site.
+3. assets/cfaq/
+   Imagens extraídas das questões CFAQ-MOC, sem Base64 no HTML principal.
 
-4. .nojekyll
-   Arquivo necessário para impedir que o GitHub Pages processe o projeto
-   com Jekyll. Deve permanecer na raiz do repositório.
+4. README.md
+   Documentação geral, conteúdo das trilhas, execução, GitHub Pages, privacidade e limitações.
 
-5. MANIFESTO_DE_ARQUIVOS.txt
-   Este documento, com a descrição do conteúdo do pacote.
+5. logo.svg
+   Logotipo vetorial usado na interface.
+
+6. favicon.svg, favicon.ico, favicon-32x32.png, favicon-192x192.png e apple-touch-icon.png
+   Identidade visual da aba do navegador, atalhos e dispositivos móveis.
+
+7. site.webmanifest
+   Metadados para instalação e identificação do site como aplicação web.
+
+8. .nojekyll
+   Impede que o GitHub Pages processe o projeto com Jekyll.
+
+DOCUMENTAÇÃO DA TRILHA IBGE
+9. MATRIZ_CURRICULAR_IBGE.md
+   Conversão do Anexo III em módulos e microlições.
+
+10. MAPEAMENTO_EDITAL_IBGE.md
+   Relaciona cada item do Anexo III às microlições correspondentes.
+
+11. CURADORIA_DE_MATERIAIS_IBGE.md
+   Critérios, fontes audiovisuais, fontes oficiais e limitações da curadoria.
+
+12. RELATORIO_VALIDACAO_IBGE.md
+   Contagens e verificações automáticas da trilha revisada.
+
+13. RELATORIO_EXPANSAO_IBGE_V2.md
+   Detalha a ampliação do banco, a integração da prova histórica e a nova curadoria audiovisual.
+
+14. documentos/ibge/
+    Edital, anexos enviados, material do Censo Agropecuário, prova de 2019, gabaritos e pareceres.
+
+15. documentos/ibge/LEIA-ME.txt
+    Explicação da origem e do uso dos documentos locais.
+
+DOCUMENTAÇÃO E FERRAMENTAS CFAQ-MOC
+16. MAPEAMENTO_CFAQ_MOC.md
+    Matriz dos 10 módulos, 30 microlições, questões e videoaulas.
+
+17. RELATORIO_IMPORTACAO_CFAQ_MOC.md e AUDITORIA_IMPORTACAO_CFAQ_MOC.json
+    Registro das questões importadas, omitidas, duplicadas, textos-base e imagens.
+
+18. RELATORIO_VALIDACAO_CFAQ_MOC.md e RELATORIO_TESTE_FLUXO_CFAQ_MOC.md
+    Resultado das verificações estruturais e do teste de fluxo DOM.
+
+19. documentos/cfaq-moc/LEIA-ME.txt
+    Escopo, fontes oficiais e limite da atribuição institucional.
+
+20. fontes/Rota_Naval_original.html
+    Fonte recebida e preservada para rastreabilidade da importação.
+
+21. tools/ e package.json
+    Gerador, validação estrutural e teste de fluxo DOM. O npm é opcional e não é necessário para usar o site.
+
+ARQUIVOS GERAIS
+22. CHANGELOG.md
+    Registro das alterações das versões IBGE e CFAQ-MOC.
+
+23. SHA256SUMS.txt
+    Resumos criptográficos para conferir a integridade dos arquivos do pacote.
 
 PUBLICAÇÃO NO GITHUB PAGES
+1. Extraia o ZIP.
+2. Envie todo o conteúdo para a raiz da branch main.
+3. Abra Settings > Pages.
+4. Escolha Deploy from a branch, branch main e pasta /(root).
+5. Salve e aguarde a publicação.
 
-Extraia o ZIP e envie todos os arquivos para a raiz da branch principal do
-repositório. Em Settings > Pages, selecione Deploy from a branch, escolha a
-branch main e a pasta /(root).
+O projeto é estático, não exige npm, compilação, banco de dados ou servidor próprio.
+O progresso é salvo no navegador e permanece separado por trilha.
 
-O projeto é estático e não exige instalação, compilação ou servidor próprio.
 
-ÍCONES E IDENTIDADE VISUAL
-- logo.svg: logotipo usado dentro da interface.
-- favicon.svg: ícone vetorial da aba do navegador.
-- favicon-32x32.png: alternativa PNG para navegadores.
-- favicon.ico: alternativa clássica para favicon.
-- apple-touch-icon.png: ícone para atalhos em dispositivos Apple.
-- favicon-192x192.png: ícone do manifesto/PWA.
-- site.webmanifest: identidade e configuração básica para instalação do site.
+VERSÃO CFAQ-MOC NACIONAL V1
+- 10 módulos.
+- 30 microlições.
+- 406 questões ativas.
+- 30 questões no diagnóstico.
+- 17 videoaulas.
+- 11 conjuntos históricos de 2023 a 2026.
+- 21 imagens e 17 textos-base incorporados.
+
+
+VERSÃO IBGE V2
+- 98 microlições.
+- 327 questões.
+- 80 recursos audiovisuais.
+- 32 questões oficiais de 2019 integradas.
+- 39 questões no diagnóstico.
