@@ -22,6 +22,7 @@ O aluno pode:
 - realizar um diagnóstico inicial;
 - seguir uma rota progressiva de estudos;
 - estudar por disciplina e módulo;
+- praticar flashcards com repetição espaçada;
 - assistir a videoaulas complementares;
 - responder questões de múltipla escolha;
 - receber correção comentada;
@@ -37,13 +38,13 @@ Todo o projeto funciona como um site estático e pode ser publicado gratuitament
 
 ## Estado atual do conteúdo
 
-| Trilha | Módulos | Microlições | Questões | Vídeos e coleções | Diagnóstico |
-|---|---:|---:|---:|---:|---:|
-| DATAPREV | 23 | 133 | 258 | 50 | 40 questões |
-| ASON | 20 | 80 | 160 | 50 | 28 questões |
-| IBGE | 19 | 98 | 327 | 80 | 39 questões |
-| CFAQ-MOC | 10 | 30 | 406 | 17 | 30 questões |
-| **Total** | **72** | **341** | **1.151** | **197** | — |
+| Trilha | Módulos | Microlições | Flashcards | Questões | Vídeos e coleções | Diagnóstico |
+|---|---:|---:|---:|---:|---:|---:|
+| DATAPREV | 23 | 133 | 153 | 258 | 50 | 40 questões |
+| ASON | 20 | 80 | 100 | 160 | 50 | 28 questões |
+| IBGE | 19 | 98 | 118 | 327 | 80 | 39 questões |
+| CFAQ-MOC | 10 | 30 | 50 | 406 | 17 | 30 questões |
+| **Total** | **72** | **341** | **421** | **1.151** | **197** | — |
 
 Os números representam o conteúdo disponível na versão multitrilhas com a inclusão do IBGE. O banco poderá crescer com novas questões, provas anteriores comentadas, revisões editoriais e atualizações de legislação e atualidades.
 
@@ -95,6 +96,24 @@ As questões autorais foram criadas para fixação e aproximação ao estilo dos
 ### Revisão espaçada
 
 A plataforma mantém uma fila de conteúdos para revisão. O objetivo é evitar que o aluno apenas conclua aulas e esqueça o assunto, priorizando retenção e recuperação ativa.
+
+### Flashcards adaptativos
+
+Cada microlição possui um flashcard-base, totalizando 341 cartões-base. A versão 1.2.0 acrescenta 80 cartões estratégicos de alta incidência — 20 por curso — e eleva o catálogo a 421 cartões. A frente usa recuperação ativa; a resposta reúne a síntese, os pontos essenciais e, nos cartões estratégicos, a razão objetiva da prioridade.
+
+O aluno pode:
+
+- revisar cartões vencidos;
+- iniciar o baralho **Alta incidência**, com até 20 cartões estratégicos;
+- aprender até dez cartões novos por sessão;
+- filtrar por disciplina e módulo;
+- estudar um baralho temático;
+- revisar cartões ligados às lições registradas no caderno de erros;
+- classificar a lembrança como **Errei**, **Difícil**, **Bom** ou **Fácil**.
+
+O intervalo é calculado localmente. “Errei” reapresenta o cartão após dez minutos; as demais classificações ampliam o intervalo conforme o histórico. Cada cartão concede no máximo um ponto de experiência por dia, evitando repetição artificial para acumular XP.
+
+A prioridade não é apresentada como previsão. No DATAPREV ela cruza a prova FGV de 2024 com o edital de 2026; no ASON usa a distribuição oficial da prova de 2026; no IBGE segue o peso 15/10/35 do edital atual; e no CFAQ-MOC usa a incidência observada nas 406 questões ativas da amostra histórica interna. A metodologia e as fontes aparecem na própria tela.
 
 ### Caderno de erros
 
@@ -505,7 +524,7 @@ Não são utilizados:
 - gerenciador de pacotes;
 - serviços pagos obrigatórios.
 
-A maior parte do CSS, do JavaScript e dos dados das trilhas está incorporada ao próprio `index.html`. Essa escolha facilita a publicação e reduz problemas causados por módulos, caminhos e dependências externas.
+A maior parte do CSS, do JavaScript e dos dados das trilhas está incorporada ao próprio `index.html`. Os dados CFAQ-MOC, o catálogo-base, os cartões estratégicos e o motor de repetição ficam em scripts clássicos separados. Essa escolha facilita a manutenção e preserva compatibilidade com abertura local e GitHub Pages.
 
 ---
 
@@ -513,13 +532,21 @@ A maior parte do CSS, do JavaScript e dos dados das trilhas está incorporada ao
 
 ```text
 versa-concursos-multitrilhas/
-├── index.html    # Aplicação, estilos, lógica e conteúdo das trilhas
-├── logo.svg      # Identidade visual usada pelo site
-├── README.md     # Documentação do projeto
+├── index.html              # Aplicação, estilos, lógica e conteúdo das trilhas
+├── cfaq-data.js            # Dados modulares CFAQ-MOC
+├── flashcards-priority-data.js # 80 cartões e metodologia de alta incidência
+├── flashcards-data.js      # Geração e integração do catálogo de 421 cartões
+├── flashcards-engine.js    # Agendamento e repetição espaçada
+├── logo.svg                # Identidade visual usada pelo site
+├── README.md               # Documentação do projeto
 ├── MATRIZ_CURRICULAR_IBGE.md
 ├── MAPEAMENTO_EDITAL_IBGE.md
 ├── CURADORIA_DE_MATERIAIS_IBGE.md
 ├── RELATORIO_VALIDACAO_IBGE.md
+├── RELATORIO_IMPLEMENTACAO_FLASHCARDS.md
+├── RELATORIO_FLASHCARDS_ALTA_INCIDENCIA.md
+├── RELATORIO_VALIDACAO_FLASHCARDS.md
+├── tools/                  # Geração e validações opcionais
 ├── documentos/ibge/ # Editais, anexos, prova e materiais de referência
 └── .nojekyll     # Impede processamento desnecessário pelo Jekyll
 ```
@@ -555,7 +582,7 @@ Essa opção reproduz de forma mais próxima o comportamento do GitHub Pages.
 ## Publicação no GitHub Pages
 
 1. Crie um repositório no GitHub.
-2. Envie os arquivos `index.html`, `logo.svg`, `README.md` e `.nojekyll` para a raiz da branch `main`.
+2. Envie **todo o conteúdo extraído do ZIP** para a raiz da branch `main`, mantendo as pastas e os arquivos `.js`.
 3. Abra **Settings** no repositório.
 4. Entre em **Pages**.
 5. Em **Build and deployment**, selecione **Deploy from a branch**.
@@ -573,6 +600,7 @@ O progresso é salvo no `localStorage` do navegador.
 Isso significa que:
 
 - os dados permanecem no dispositivo e no perfil de navegador utilizado;
+- o histórico de flashcards permanece separado em cada curso;
 - não existe conta online ou sincronização automática;
 - abrir o site em outro navegador não recupera o progresso;
 - limpar os dados do navegador pode apagar perfil, respostas e progresso;
@@ -587,7 +615,7 @@ Quando o navegador bloqueia o `localStorage`, a aplicação tenta usar um armaze
 A área de administração é um painel editorial simples, salvo no navegador. Ela apresenta:
 
 - número de cursos;
-- quantidade de lições e questões;
+- quantidade de lições, questões e flashcards;
 - situação do curso selecionado;
 - criação de rascunhos locais.
 

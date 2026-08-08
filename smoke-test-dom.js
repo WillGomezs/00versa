@@ -33,6 +33,7 @@ const server = http.createServer((request, response) => {
       window.confirm = () => true;
       window.localStorage.setItem('versa-profile-v2', JSON.stringify({ name:'Validação', dailyMinutes:45, onboarded:true, theme:'light' }));
       window.localStorage.setItem('versa-active-course', JSON.stringify('cfaq'));
+      window.localStorage.setItem('versa-progress-cfaq', JSON.stringify({ completed:[], scores:{}, xp:5, streak:1, reviews:[], errors:[], diagnostic:null, simulations:[] }));
     },
   });
   await new Promise((resolve) => dom.window.addEventListener('load', () => setTimeout(resolve, 100)));
@@ -41,6 +42,24 @@ const server = http.createServer((request, response) => {
   result.courseCards = document.querySelectorAll('.course-card').length;
   document.querySelector('[data-start-course="cfaq"]').click();
   result.dashboardTitle = document.querySelector('.hero h1')?.textContent;
+  document.querySelector('[data-view="flashcards"]').click();
+  result.flashCardsCfaq = document.querySelector('.page-head .badge')?.textContent;
+  result.flashPriorityButtonDisabled = document.querySelector('[data-flash-start="priority"]')?.disabled;
+  document.querySelector('[data-flash-start="priority"]').click();
+  result.flashPrioritySessionLabel = document.querySelector('.flash-study-top .badge')?.textContent;
+  result.flashPriorityBadge = document.querySelector('.flash-context .priority')?.textContent;
+  document.querySelector('#flash-exit').click();
+  result.flashNewButtonDisabled = document.querySelector('[data-flash-start="new"]')?.disabled;
+  document.querySelector('[data-flash-start="new"]').click();
+  result.flashSessionLabel = document.querySelector('.flash-study-top .badge')?.textContent;
+  document.querySelector('#flash-reveal').click();
+  result.flashAnswerVisible = Boolean(document.querySelector('.flash-answer'));
+  result.flashRatings = document.querySelectorAll('[data-flash-rating]').length;
+  document.querySelector('[data-flash-rating="good"]').click();
+  result.flashNextLabel = document.querySelector('.flash-study-top .badge')?.textContent;
+  const savedFlashProgress = JSON.parse(dom.window.localStorage.getItem('versa-progress-cfaq'));
+  result.flashSavedCards = Object.keys(savedFlashProgress.flashcards.cards).length;
+  result.flashMigratedXp = savedFlashProgress.xp;
   document.querySelector('[data-view="path"]').click();
   result.pathLessons = document.querySelectorAll('.lesson-card').length;
   document.querySelector('.lesson-card').click();
@@ -54,6 +73,8 @@ const server = http.createServer((request, response) => {
   for (const id of ['dataprev','ason','ibge','cfaq']) {
     document.querySelector(`[data-course="${id}"]`).click();
     result[`course_${id}`] = document.querySelector('.hero h1')?.textContent;
+    document.querySelector('[data-view="flashcards"]').click();
+    result[`flashcards_${id}`] = document.querySelector('.page-head .badge')?.textContent;
   }
   document.querySelector('[data-view="simulation"]').click();
   const proofSelect = document.querySelector('#cfaq-proof-select');
@@ -65,6 +86,17 @@ const server = http.createServer((request, response) => {
   const checks = [
     result.courseCards === 4,
     result.dashboardTitle === 'CFAQ-MOC Nacional',
+    result.flashCardsCfaq === '50 cartões',
+    result.flashPriorityButtonDisabled === false,
+    result.flashPrioritySessionLabel === 'Cartão 1/20',
+    /Alta incidência/.test(result.flashPriorityBadge || ''),
+    result.flashNewButtonDisabled === false,
+    result.flashSessionLabel === 'Cartão 1/10',
+    result.flashAnswerVisible === true,
+    result.flashRatings === 4,
+    result.flashNextLabel === 'Cartão 2/10',
+    result.flashSavedCards === 1,
+    result.flashMigratedXp === 6,
     result.pathLessons === 30,
     result.lessonQuestions >= 3,
     result.simChoices === 4,
@@ -75,6 +107,10 @@ const server = http.createServer((request, response) => {
     result.course_ason === 'ASON 2027',
     result.course_ibge === 'IBGE 2026',
     result.course_cfaq === 'CFAQ-MOC Nacional',
+    result.flashcards_dataprev === '153 cartões',
+    result.flashcards_ason === '100 cartões',
+    result.flashcards_ibge === '118 cartões',
+    result.flashcards_cfaq === '50 cartões',
     /^Questão 1\/\d+$/.test(result.proofSimLabel || ''),
     /Prova histórica: CFAQ/.test(result.proofSource || ''),
     errors.length === 0,
@@ -83,7 +119,7 @@ const server = http.createServer((request, response) => {
   server.close();
   const payload = { status: checks.every(Boolean) ? 'passed' : 'failed', result, errors };
   if (checks.every(Boolean)) {
-    const report = `# Teste de fluxo DOM — CFAQ-MOC Nacional\n\nData: 07/08/2026\n\nStatus: **APROVADO**\n\n- Cartões de curso exibidos: ${result.courseCards}.\n- Curso aberto: ${result.dashboardTitle}.\n- Microlições exibidas: ${result.pathLessons}.\n- Questões na primeira lição testada: ${result.lessonQuestions}.\n- Modos de simulado: ${result.simChoices}.\n- Opções do filtro histórico: ${result.proofOptions}.\n- Simulado completo iniciado: ${result.simQuestionLabel}.\n- Alternativas renderizadas na questão testada: ${result.simOptions}.\n- Alternância validada: ${result.course_dataprev}, ${result.course_ason}, ${result.course_ibge} e ${result.course_cfaq}.\n- Simulado histórico iniciado: ${result.proofSimLabel}.\n- Origem histórica exibida: ${result.proofSource}.\n- Erros de JavaScript capturados: ${errors.length}.\n\nO teste executou a aplicação em um DOM com carregamento HTTP local. Não substitui inspeção visual em navegador real.\n`;
+    const report = `# Teste de fluxo DOM — CFAQ-MOC Nacional e flashcards\n\nData: 08/08/2026\n\nStatus: **APROVADO**\n\n- Cartões de curso exibidos: ${result.courseCards}.\n- Curso aberto: ${result.dashboardTitle}.\n- Flashcards CFAQ-MOC: ${result.flashCardsCfaq}; sessão iniciada em ${result.flashSessionLabel}.\n- Resposta revelada: ${result.flashAnswerVisible}; classificações disponíveis: ${result.flashRatings}.\n- Migração e salvamento: ${result.flashSavedCards} cartão salvo; XP antigo preservado e atualizado para ${result.flashMigratedXp}.\n- Catálogos: DATAPREV ${result.flashcards_dataprev}, ASON ${result.flashcards_ason}, IBGE ${result.flashcards_ibge} e CFAQ-MOC ${result.flashcards_cfaq}.\n- Microlições CFAQ-MOC exibidas: ${result.pathLessons}.\n- Questões na primeira lição testada: ${result.lessonQuestions}.\n- Modos de simulado: ${result.simChoices}.\n- Opções do filtro histórico: ${result.proofOptions}.\n- Simulado completo iniciado: ${result.simQuestionLabel}.\n- Alternativas renderizadas na questão testada: ${result.simOptions}.\n- Alternância validada: ${result.course_dataprev}, ${result.course_ason}, ${result.course_ibge} e ${result.course_cfaq}.\n- Simulado histórico iniciado: ${result.proofSimLabel}.\n- Origem histórica exibida: ${result.proofSource}.\n- Erros de JavaScript capturados: ${errors.length}.\n\nO teste executou a aplicação em um DOM com carregamento HTTP local. Não substitui inspeção visual em navegador real.\n`;
     fs.writeFileSync(path.join(root, 'RELATORIO_TESTE_FLUXO_CFAQ_MOC.md'), report);
   }
   console.log(JSON.stringify(payload, null, 2));

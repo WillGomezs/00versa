@@ -1,12 +1,14 @@
 {
   "name": "versa-concursos-cfaq-moc-nacional",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "private": true,
-  "description": "Ferramentas opcionais de geração e validação da trilha CFAQ-MOC Nacional.",
+  "description": "Ferramentas opcionais de geração e validação das trilhas e dos flashcards estratégicos do Versa Concursos.",
   "scripts": {
     "build:cfaq": "node tools/build-cfaq-course.js",
     "validate:cfaq": "node tools/validate-cfaq-course.js",
+    "validate:flashcards": "node tools/validate-flashcards.js",
     "test:dom": "node tools/smoke-test-dom.js",
+    "test": "npm run validate:cfaq && npm run validate:flashcards && npm run test:dom",
     "checksums": "node tools/update-checksums.js"
   },
   "devDependencies": {

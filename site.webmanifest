@@ -1,7 +1,7 @@
 {
-  "name": "Versa Concursos — DATAPREV, ASON e IBGE",
+  "name": "Versa Concursos — Multitrilhas e Flashcards",
   "short_name": "Versa",
-  "description": "Plataforma gratuita de trilhas de estudo para DATAPREV, ASON e IBGE Ciências Sociais/Antropologia.",
+  "description": "Plataforma gratuita de trilhas, flashcards e simulados para DATAPREV, ASON, IBGE e CFAQ-MOC.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0c1715",

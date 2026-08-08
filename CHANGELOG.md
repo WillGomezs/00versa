@@ -1,5 +1,36 @@
 # Changelog
 
+## Flashcards estratégicos de alta incidência v1.2.0 — 08/08/2026
+
+- Adicionados 80 cartões estratégicos, sendo 20 em cada curso.
+- Catálogo ampliado de 341 para 421 flashcards.
+- Criado o baralho **Alta incidência**, com sessões de até 20 cartões.
+- Incluída em cada cartão estratégico a justificativa “Por que priorizar”.
+- Exibida na interface a metodologia específica de cada trilha e links das fontes oficiais.
+- DATAPREV: prioridade cruzada entre a prova FGV de 2024 e o edital retificado de 2026.
+- ASON: equilíbrio conforme a prova oficial de 2026, com 10 questões por disciplina.
+- IBGE: distribuição proporcional aos pesos oficiais de 15/10/35 questões.
+- CFAQ-MOC: ranking calculado sobre as 406 questões ativas da amostra histórica de 2023 a 2026.
+- Preservados os 341 cartões-base e todos os identificadores e progressos da versão anterior.
+- Adicionado teste automatizado do botão, da sessão e do marcador de alta incidência.
+- Aprovadas 2.321 verificações especializadas de flashcards e o teste de fluxo DOM sem erros JavaScript.
+
+## Flashcards adaptativos v1.1.0 — 08/08/2026
+
+- Adicionado o sistema de flashcards aos quatro cursos.
+- Criados 341 cartões-base: 133 DATAPREV, 80 ASON, 98 IBGE e 30 CFAQ-MOC.
+- Adicionadas sessões de revisão, dez cartões novos, baralhos por módulo e pontos fracos.
+- Criados filtros por disciplina e módulo.
+- Implementadas as classificações Errei, Difícil, Bom e Fácil com repetição espaçada local.
+- Cartões classificados como Errei reaparecem uma vez no final da sessão.
+- Integrado o caderno de erros para priorizar cartões das lições com falhas registradas.
+- Adicionados atalhos de teclado para revelar e classificar cartões.
+- Adicionadas métricas de cartões vencidos, novos, estudados e maduros.
+- Implementada migração automática, preservando progressos antigos.
+- Mantido o armazenamento independente em cada curso.
+- Adicionados testes do catálogo, agendador, migração e fluxo DOM.
+- Atualizada a documentação e a publicação no GitHub Pages.
+
 ## Inclusão da trilha CFAQ-MOC Nacional — 07/08/2026
 
 - Adicionada a quarta trilha: **CFAQ-MOC Nacional — Moço de Convés — todas as Capitanias**.

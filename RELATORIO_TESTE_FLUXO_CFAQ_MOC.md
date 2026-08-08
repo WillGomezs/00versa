@@ -1,12 +1,16 @@
-# Teste de fluxo DOM — CFAQ-MOC Nacional
+# Teste de fluxo DOM — CFAQ-MOC Nacional e flashcards
 
-Data: 07/08/2026
+Data: 08/08/2026
 
 Status: **APROVADO**
 
 - Cartões de curso exibidos: 4.
 - Curso aberto: CFAQ-MOC Nacional.
-- Microlições exibidas: 30.
+- Flashcards CFAQ-MOC: 50 cartões; sessão iniciada em Cartão 1/10.
+- Resposta revelada: true; classificações disponíveis: 4.
+- Migração e salvamento: 1 cartão salvo; XP antigo preservado e atualizado para 6.
+- Catálogos: DATAPREV 153 cartões, ASON 100 cartões, IBGE 118 cartões e CFAQ-MOC 50 cartões.
+- Microlições CFAQ-MOC exibidas: 30.
 - Questões na primeira lição testada: 5.
 - Modos de simulado: 4.
 - Opções do filtro histórico: 12.

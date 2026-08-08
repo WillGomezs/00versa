@@ -13,6 +13,15 @@ ARQUIVOS PRINCIPAIS
 2. cfaq-data.js
    Dados modulares da trilha CFAQ-MOC Nacional: módulos, microlições, questões, textos-base, vídeos e referências.
 
+2A. flashcards-priority-data.js
+    Reúne 80 cartões estratégicos, a metodologia de incidência e as fontes oficiais.
+
+2B. flashcards-data.js
+    Constrói os 341 cartões-base e integra o catálogo total de 421 flashcards.
+
+2C. flashcards-engine.js
+    Motor local de repetição espaçada, migração e agendamento dos cartões.
+
 3. assets/cfaq/
    Imagens extraídas das questões CFAQ-MOC, sem Base64 no HTML principal.
 
@@ -63,6 +72,12 @@ DOCUMENTAÇÃO E FERRAMENTAS CFAQ-MOC
 18. RELATORIO_VALIDACAO_CFAQ_MOC.md e RELATORIO_TESTE_FLUXO_CFAQ_MOC.md
     Resultado das verificações estruturais e do teste de fluxo DOM.
 
+18A. RELATORIO_IMPLEMENTACAO_FLASHCARDS.md e RELATORIO_VALIDACAO_FLASHCARDS.md
+     Escopo da nova função, contagens, migração, agendamento e validações.
+
+18B. RELATORIO_FLASHCARDS_ALTA_INCIDENCIA.md
+     Metodologia, ranking, fontes e limites dos 80 cartões estratégicos.
+
 19. documentos/cfaq-moc/LEIA-ME.txt
     Escopo, fontes oficiais e limite da atribuição institucional.
 
@@ -70,11 +85,11 @@ DOCUMENTAÇÃO E FERRAMENTAS CFAQ-MOC
     Fonte recebida e preservada para rastreabilidade da importação.
 
 21. tools/ e package.json
-    Gerador, validação estrutural e teste de fluxo DOM. O npm é opcional e não é necessário para usar o site.
+    Geradores, validações estruturais, teste de flashcards e teste de fluxo DOM. O npm é opcional e não é necessário para usar o site.
 
 ARQUIVOS GERAIS
 22. CHANGELOG.md
-    Registro das alterações das versões IBGE e CFAQ-MOC.
+    Registro das alterações das versões IBGE, CFAQ-MOC e flashcards.
 
 23. SHA256SUMS.txt
     Resumos criptográficos para conferir a integridade dos arquivos do pacote.
@@ -88,6 +103,15 @@ PUBLICAÇÃO NO GITHUB PAGES
 
 O projeto é estático, não exige npm, compilação, banco de dados ou servidor próprio.
 O progresso é salvo no navegador e permanece separado por trilha.
+
+
+VERSÃO FLASHCARDS V1.1.0
+- 421 cartões: 341 cartões-base e 80 cartões estratégicos de alta incidência.
+- 133 DATAPREV, 80 ASON, 98 IBGE e 30 CFAQ-MOC.
+- Repetição espaçada com Errei, Difícil, Bom e Fácil.
+- Sessões de cartões vencidos, novos, pontos fracos e módulos.
+- Filtros por disciplina e módulo.
+- Migração segura do progresso anterior.
 
 
 VERSÃO CFAQ-MOC NACIONAL V1
