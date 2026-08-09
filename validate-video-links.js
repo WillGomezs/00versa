@@ -26,6 +26,7 @@ const sandbox = {
 
 for (const filename of [
   'cfaq-data.js',
+  'dataprev-history-data.js',
   'flashcards-priority-data.js',
   'flashcards-data.js',
   'flashcards-engine.js',

@@ -1,6 +1,6 @@
 # Publicação segura no GitHub Pages
 
-Este guia considera o pacote Versa Concursos v1.5.0.
+Este guia considera o pacote Versa Concursos v1.6.0.
 
 ## Antes de enviar
 

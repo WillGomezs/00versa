@@ -74,7 +74,7 @@ const appSandbox = {
   document:{ getElementById:()=>({}), querySelector:()=>null, querySelectorAll:()=>[], activeElement:null },
   console,
 };
-for (const filename of ['cfaq-data.js','flashcards-priority-data.js','flashcards-data.js','flashcards-engine.js','adaptive-engine.js']) {
+for (const filename of ['cfaq-data.js','dataprev-history-data.js','flashcards-priority-data.js','flashcards-data.js','flashcards-engine.js','adaptive-engine.js']) {
   vm.runInNewContext(fs.readFileSync(path.join(root, filename), 'utf8'), appSandbox, { filename });
 }
 let main = fs.readFileSync(path.join(root, 'app.js'), 'utf8');

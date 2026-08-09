@@ -1,5 +1,17 @@
 # Changelog
 
+## Banco histórico oficial DATAPREV v1.6.0 — 09/08/2026
+
+- Incorporadas 69 questões válidas da prova FGV DATAPREV 2024, com a questão 13 anulada omitida.
+- Incorporados 115 itens válidos da prova Cebraspe DATAPREV 2023, Cargo 19, com cinco itens anulados omitidos.
+- Usados gabaritos definitivos das bancas; o gabarito preliminar recebido foi mantido apenas para rastreabilidade.
+- Mapeadas as 184 questões às microlições correspondentes, com limite de duas questões históricas visíveis por aula.
+- Criados simulados históricos que preservam a ordem e as alternativas originais.
+- Implementada a pontuação líquida Cebraspe: +1 por acerto, −1 por erro e 0 em branco.
+- Adicionados oito textos-base e três figuras vetoriais necessárias às questões.
+- Incluída validação automatizada com 447 verificações específicas do novo banco.
+- Mantida a arquitetura estática, sem conta, API, telemetria ou nova coleta de dados.
+
 ## Plano inteligente e domínio adaptativo v1.5.0 — 09/08/2026
 
 - Criado motor adaptativo local, transparente e compatível com o progresso anterior.

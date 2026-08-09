@@ -40,11 +40,11 @@ Todo o projeto funciona como um site estático e pode ser publicado gratuitament
 
 | Trilha | Módulos | Microlições | Flashcards | Questões | Vídeos e coleções | Diagnóstico |
 |---|---:|---:|---:|---:|---:|---:|
-| DATAPREV | 23 | 133 | 153 | 258 | 50 | 40 questões |
+| DATAPREV | 23 | 133 | 153 | 442 | 50 | 40 questões |
 | ASON | 20 | 80 | 100 | 160 | 50 | 28 questões |
 | IBGE | 19 | 98 | 118 | 327 | 80 | 39 questões |
 | CFAQ-MOC | 10 | 30 | 50 | 406 | 17 | 30 questões |
-| **Total** | **72** | **341** | **421** | **1.151** | **197** | — |
+| **Total** | **72** | **341** | **421** | **1.335** | **197** | — |
 
 Os números representam o conteúdo disponível na versão multitrilhas com a inclusão do IBGE. O banco poderá crescer com novas questões, provas anteriores comentadas, revisões editoriais e atualizações de legislação e atualidades.
 
@@ -89,9 +89,11 @@ Cada microlição procura trabalhar um recorte pequeno do conteúdo. Ela pode co
 
 ### Questões comentadas
 
-As questões apresentam quatro ou cinco alternativas, conforme a estrutura preservada da fonte, e uma explicação do gabarito. Ao errar, o item pode ser enviado ao **caderno de erros**, permitindo que o conteúdo volte para revisão.
+As questões apresentam duas, quatro ou cinco alternativas, conforme a estrutura preservada da fonte, e uma explicação do gabarito. Ao errar, o item pode ser enviado ao **caderno de erros**, permitindo que o conteúdo volte para revisão.
 
 As questões autorais foram criadas para fixação e aproximação ao estilo dos processos seletivos. Elas não devem ser tratadas como questões oficiais das bancas.
+
+No DATAPREV, há também **184 questões históricas oficiais válidas**: 69 da FGV/2024 e 115 itens Certo ou Errado do Cebraspe/2023. Questões anuladas foram omitidas e os gabaritos ativos são os definitivos.
 
 ### Revisão espaçada
 
@@ -231,6 +233,8 @@ O edital não estabelece a quantidade de questões de cada subárea dentro das 3
 
 A plataforma oferece:
 
+- prova oficial FGV 2024 — 69 questões válidas, na ordem original;
+- prova oficial Cebraspe 2023 — 115 itens válidos, na ordem original;
 - Conhecimentos Gerais — 40 questões;
 - Conhecimentos Específicos — 30 questões;
 - prova completa — 70 questões;
@@ -248,6 +252,8 @@ O modo completo inclui:
 - possibilidade de deixar questões em branco;
 - desempenho por disciplina;
 - envio dos erros ao caderno de erros.
+
+Os dois modos históricos preservam enunciados, ordem e alternativas. A prova FGV omite a questão 13 anulada. A prova Cebraspe omite os itens 29, 47, 93, 99 e 101 e calcula a pontuação líquida: **+1 por acerto, −1 por erro e 0 em branco**. Itens não respondidos não são enviados ao caderno de erros.
 
 ---
 
@@ -551,6 +557,7 @@ versa-concursos-multitrilhas/
 ├── styles.css              # Estilos locais
 ├── security-bootstrap.js   # Tratamento defensivo de inicialização
 ├── cfaq-data.js            # Dados modulares CFAQ-MOC
+├── dataprev-history-data.js # 184 questões oficiais FGV e Cebraspe
 ├── flashcards-priority-data.js # 80 cartões e metodologia de alta incidência
 ├── flashcards-data.js      # Geração e integração do catálogo de 421 cartões
 ├── flashcards-engine.js    # Agendamento e repetição espaçada
@@ -570,12 +577,16 @@ versa-concursos-multitrilhas/
 ├── RELATORIO_AUDITORIA_SEGURANCA_V1.4.0.md
 ├── RELATORIO_AUDITORIA_SEGURANCA_V1.5.0.md
 ├── AUDITORIA_SEGURANCA_V1.5.0.json
+├── RELATORIO_AUDITORIA_SEGURANCA_V1.6.0.md
+├── AUDITORIA_SEGURANCA_V1.6.0.json
 ├── RELATORIO_IMPLEMENTACAO_ADAPTATIVA_V1.5.0.md
+├── RELATORIO_INCORPORACAO_DATAPREV_HISTORICO_V1.6.0.md
 ├── PENDENCIAS_EDITORIAIS_FUTURAS.md
 ├── PRIVACIDADE.md
 ├── SECURITY.md
 ├── GUIA_PUBLICACAO_SEGURA_GITHUB_PAGES.md
 ├── tools/                  # Geração e validações opcionais
+├── documentos/dataprev/ # Provas e rastreabilidade dos gabaritos
 ├── documentos/ibge/ # Editais, anexos, prova e materiais de referência
 └── .nojekyll     # Impede processamento desnecessário pelo Jekyll
 ```
@@ -648,7 +659,7 @@ Consulte `PRIVACIDADE.md` para a descrição completa.
 
 ## Segurança da publicação
 
-A versão 1.3.0 adicionou CSP, política `no-referrer`, validação de URLs e imagens, limites de armazenamento e testes contra XSS. Na versão 1.4.0, a CSP foi ajustada para permitir somente thumbnails em `i.ytimg.com`; iframes, reprodução incorporada e outros hosts continuam bloqueados. A versão 1.5.0 normaliza e limita também o histórico adaptativo. Os relatórios técnicos mais recentes são `RELATORIO_AUDITORIA_SEGURANCA_V1.4.0.md` e `RELATORIO_AUDITORIA_SEGURANCA_V1.5.0.md`.
+A versão 1.3.0 adicionou CSP, política `no-referrer`, validação de URLs e imagens, limites de armazenamento e testes contra XSS. Na versão 1.4.0, a CSP foi ajustada para permitir somente thumbnails em `i.ytimg.com`; iframes, reprodução incorporada e outros hosts continuam bloqueados. A versão 1.5.0 normalizou o histórico adaptativo. A versão 1.6.0 incorporou o banco histórico DATAPREV como arquivo estático local, sem API, conta ou nova coleta de dados. O relatório técnico mais recente é `RELATORIO_AUDITORIA_SEGURANCA_V1.6.0.md`.
 
 Esses controles foram orientados por ISO/IEC 27001, 27002, 27701 e 27017, LGPD, OWASP e NIST SSDF, mas **não constituem certificação ISO nem garantia de risco zero**. A conta GitHub, o HTTPS, o domínio e futuras alterações continuam sob responsabilidade de quem publica.
 

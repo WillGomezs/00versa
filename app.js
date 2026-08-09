@@ -1,4 +1,4 @@
-/* Versa Concursos — aplicação adaptativa e endurecida v1.5.0. */
+/* Versa Concursos — aplicação adaptativa e endurecida v1.6.0. */
 (() => {
   "use strict";
   function buildDataprevCourse() {
@@ -5190,17 +5190,35 @@
       minimumPoints: 57.5,
       duration: "4 horas",
     };
+    const historical = window.DATAPREV_HISTORY_DATA || {
+      questions: [],
+      textBases: {},
+      proofs: [],
+    };
+    questions.push(...historical.questions);
+    const historicalByLesson = new Map();
+    for (const question of historical.questions) {
+      const key = `${question.lessonId}:${question.board}`;
+      if (!historicalByLesson.has(key)) historicalByLesson.set(key, question.id);
+    }
+    for (const lesson of lessons) {
+      for (const board of ["FGV", "CEBRASPE"]) {
+        const questionId = historicalByLesson.get(`${lesson.id}:${board}`);
+        if (questionId && !lesson.questionIds.includes(questionId))
+          lesson.questionIds.push(questionId);
+      }
+    }
 
     return {
       id: "dataprev",
       shortName: "DATAPREV",
       name: "DATAPREV 2026",
       subtitle: "Segurança Cibernética e Proteção de Dados",
-      status: "Redes + Segurança da Informação v4",
+      status: "Trilha completa + provas oficiais FGV e Cebraspe",
       icon: "⌘",
       accent: "#356f69",
       description:
-        "Preparação adaptativa para o Perfil 5, agora com Redes e oito módulos completos de Segurança da Informação.",
+        "Preparação adaptativa para o Perfil 5, com 184 questões oficiais válidas das provas FGV 2024 e Cebraspe 2023 integradas à trilha.",
       exam: {
         board: "FGV",
         questions: 70,
@@ -5210,6 +5228,8 @@
       units,
       lessons,
       questions,
+      textBases: historical.textBases,
+      historicalProofs: historical.proofs,
       examInfo,
       videoCatalog: DATAPREV_VIDEO_CATALOG,
       videoReviewDate: "09/08/2026",
@@ -5247,8 +5267,15 @@
         },
         {
           type: "Prova",
-          title: "Prova anterior — Perfil 5",
-          description: "Referência para o padrão de cobrança.",
+          title: "DATAPREV 2024 — FGV — Tipo 1",
+          description:
+            "69 questões válidas incorporadas; questão 13 anulada e omitida.",
+        },
+        {
+          type: "Prova",
+          title: "DATAPREV 2023 — Cebraspe — Cargo 19",
+          description:
+            "115 itens válidos incorporados; cinco itens anulados e omitidos.",
         },
         {
           type: "Referência técnica",
@@ -5273,7 +5300,8 @@
       references: [
         "Edital DATAPREV 2026",
         "Edital verticalizado DATAPREV 2026",
-        "Prova anterior FGV",
+        "DATAPREV 2024 — FGV — ATI Segurança Cibernética e Proteção de Dados — Tipo 1",
+        "DATAPREV 2023 — Cebraspe — Cargo 19 Segurança Cibernética",
         "NIST SP 800-61 Rev. 3 (2025)",
         "NIST CSF 2.0",
         "OWASP Top 10:2025",
@@ -26412,7 +26440,7 @@
           if (j === q.correct) cls += "correct";
           else if (j === sel) cls += "wrong";
         }
-        return `<button class="option ${cls}" data-q="${q.id}" data-opt="${j}" ${ans ? "disabled" : ""}><b class="letter">${String.fromCharCode(65 + j)}</b><span>${esc(o)}</span></button>`;
+        return `<button class="option ${cls}" data-q="${q.id}" data-opt="${j}" ${ans ? "disabled" : ""}><b class="letter">${q.board === "CEBRASPE" ? ["C", "E"][j] : String.fromCharCode(65 + j)}</b><span>${esc(o)}</span></button>`;
       })
       .join(
         "",
@@ -26914,6 +26942,7 @@
   }
   function questionsByDiscipline(c, disc) {
     return c.questions.filter((q) => {
+      if (q.historical) return false;
       const l = c.lessons.find((x) => x.id === q.lessonId),
         u = l && c.units.find((x) => x.id === l.unitId);
       return u && (u.discipline || u.title) === disc;
@@ -26943,6 +26972,18 @@
       ];
     }
     if (c.id === "dataprev") {
+      if (type.startsWith("dataprev-proof:")) {
+        const proofId = type.slice("dataprev-proof:".length);
+        const proofName =
+          proofId === "fgv2024"
+            ? "DATAPREV 2024 — FGV — Tipo 1"
+            : proofId === "cebraspe2023"
+              ? "DATAPREV 2023 — Cebraspe — Cargo 19"
+              : "";
+        return c.questions
+          .filter((q) => q.sourceProof === proofName)
+          .sort((a, b) => a.questionNumber - b.questionNumber);
+      }
       if (type === "redes")
         return pickQuestions(c, "Redes de Computadores", 20);
       if (type === "seguranca")
@@ -27021,6 +27062,13 @@
   function simDuration(c, type) {
     if (c.id === "ason" && type === "completo") return 4 * 60 * 60;
     if (c.id === "dataprev" && type === "oficial") return 4 * 60 * 60;
+    if (c.id === "dataprev" && type.startsWith("dataprev-proof:"))
+      return (
+        c.historicalProofs?.find(
+          (proof) => proof.id === type.slice("dataprev-proof:".length),
+        )?.durationSeconds ||
+        4 * 60 * 60
+      );
     if (c.id === "ibge" && type === "oficial") return 4 * 60 * 60;
     if (c.id === "ibge" && type === "historico2019") return 2 * 60 * 60;
     if (
@@ -27041,7 +27089,11 @@
   }
   function startSim(type) {
     const c = course(),
-      pool = shuffled(simPool(type)).map(cloneAndShuffleQuestion);
+      exactHistorical = type.startsWith("dataprev-proof:"),
+      source = simPool(type),
+      pool = exactHistorical
+        ? source.map((q) => ({ ...q, sourceId: q.id }))
+        : shuffled(source).map(cloneAndShuffleQuestion);
     state.sim = {
       type,
       pool,
@@ -27061,6 +27113,7 @@
   }
   function simWeight(c, q) {
     if (c.id !== "dataprev") return 1;
+    if (q.board === "CEBRASPE") return 1;
     return [
       "Português",
       "Inglês",
@@ -27071,35 +27124,51 @@
       ? 1
       : 2.5;
   }
+  function simulationMetrics(c, sim) {
+    const isCebraspe = sim.type === "dataprev-proof:cebraspe2023";
+    let max = 0,
+      earned = 0,
+      correct = 0,
+      wrong = 0,
+      blank = 0;
+    sim.pool.forEach((q, index) => {
+      const response = sim.responses[index],
+        weight = simWeight(c, q);
+      max += weight;
+      if (response === null) blank++;
+      else if (response === q.correct) {
+        correct++;
+        earned += weight;
+      } else {
+        wrong++;
+        if (isCebraspe) earned -= 1;
+      }
+    });
+    return {
+      max,
+      earned,
+      correct,
+      wrong,
+      blank,
+      pct: Math.round(Math.max(0, Math.min(100, (earned / max) * 100))),
+    };
+  }
   function finalizeSim() {
     if (!state.sim || state.sim.done) return;
     state.sim.done = true;
     clearInterval(simTimerHandle);
     const c = course(),
       p = progress();
-    let earned = 0,
-      max = 0,
-      correct = 0;
     state.sim.pool.forEach((q, i) => {
-      const w = simWeight(c, q);
-      max += w;
-      const isCorrect = recordQuestionAttempt(
-        p,
-        q,
-        state.sim.responses[i],
-        "simulation",
-      );
-      if (isCorrect) {
-        earned += w;
-        correct++;
-      }
+      if (state.sim.responses[i] !== null)
+        recordQuestionAttempt(p, q, state.sim.responses[i], "simulation");
     });
-    const pct = Math.round((earned / max) * 100);
+    const metrics = simulationMetrics(c, state.sim);
     p.simulations.push({
       type: state.sim.type,
-      score: pct,
-      points: Number(earned.toFixed(1)),
-      maxPoints: Number(max.toFixed(1)),
+      score: metrics.pct,
+      points: Number(metrics.earned.toFixed(1)),
+      maxPoints: Number(metrics.max.toFixed(1)),
       date: today(),
     });
     p.errors = p.errors.slice(-1000);
@@ -27137,24 +27206,17 @@
           '<p class="muted">A distribuição 20 + 20 é uma referência de treino recorrente. Duração, etapas e critérios devem ser conferidos no edital da Capitania, Delegacia ou Agência responsável.</p>';
         filter = `<div class="cfaq-filter"><label>Treinar uma prova histórica<select id="cfaq-proof-select"><option value="">Selecione a prova</option>${(c.filters?.proofs || []).map((p) => `<option value="${esc(p)}">${esc(p)} · origem institucional a confirmar</option>`).join("")}</select></label><button class="primary" id="cfaq-start-proof" disabled>Iniciar prova selecionada</button></div>`;
       } else {
-        choices = `<button data-sim-start="gerais"><strong>Conhecimentos Gerais</strong><small>40 questões · distribuição oficial</small></button><button data-sim-start="especificos"><strong>Conhecimentos Específicos</strong><small>30 questões · distribuição interna balanceada</small></button><button data-sim-start="oficial"><strong>DATAPREV oficial</strong><small>70 questões · pesos 1 e 2,5 · 4 horas</small></button><button data-sim-start="redes"><strong>Redes</strong><small>20 questões</small></button><button data-sim-start="seguranca"><strong>Segurança</strong><small>30 questões</small></button>`;
+        choices = `<button data-sim-start="dataprev-proof:fgv2024"><strong>Prova oficial FGV 2024</strong><small>69 questões válidas · 4 horas</small></button><button data-sim-start="dataprev-proof:cebraspe2023"><strong>Prova oficial Cebraspe 2023</strong><small>115 itens C/E válidos · 3h30</small></button><button data-sim-start="gerais"><strong>Conhecimentos Gerais</strong><small>40 questões · distribuição de treino</small></button><button data-sim-start="especificos"><strong>Conhecimentos Específicos</strong><small>30 questões · distribuição interna balanceada</small></button><button data-sim-start="oficial"><strong>Modelo DATAPREV 2026</strong><small>70 questões autorais · pesos 1 e 2,5 · 4 horas</small></button><button data-sim-start="redes"><strong>Redes</strong><small>20 questões</small></button><button data-sim-start="seguranca"><strong>Segurança</strong><small>30 questões</small></button>`;
         note =
-          '<p class="muted">Nos 30 específicos, o edital não fixa quantidade por subtema; a plataforma usa uma distribuição interna balanceada entre Redes, Segurança, Governança e Nuvem.</p>';
+          '<p class="muted">As provas históricas preservam a ordem e as alternativas originais, usam gabaritos definitivos e omitem itens anulados. No Cebraspe: +1 por acerto, −1 por erro e 0 em branco. Os demais modos são treinos autorais embaralhados.</p>';
       }
       return `<section><div class="page-head"><div><span class="eyebrow">PRÁTICA SOB TEMPO</span><h1>Simulados</h1><p>Questões e alternativas são embaralhadas. Você pode navegar, deixar em branco e marcar itens para revisão.</p>${note}</div></div><div class="sim-choice">${choices}</div>${filter}</section>`;
     }
     if (state.sim.done) {
-      const max = state.sim.pool.reduce((a, q) => a + simWeight(c, q), 0),
-        earned = state.sim.pool.reduce(
-          (a, q, i) =>
-            a + (state.sim.responses[i] === q.correct ? simWeight(c, q) : 0),
-          0,
-        ),
-        correct = state.sim.pool.filter(
-          (q, i) => state.sim.responses[i] === q.correct,
-        ).length,
-        pct = Math.round((earned / max) * 100),
-        blank = state.sim.responses.filter((x) => x === null).length;
+      const { max, earned, correct, wrong, blank, pct } = simulationMetrics(
+        c,
+        state.sim,
+      );
       const disciplines = [
         ...new Set(state.sim.pool.map((q) => simDiscipline(c, q))),
       ];
@@ -27180,12 +27242,16 @@
       const officialNote =
         c.id === "dataprev" && state.sim.type === "oficial"
           ? `Pontuação ponderada: <strong>${earned.toFixed(1)} de ${max.toFixed(1)}</strong>.`
+          : state.sim.type === "dataprev-proof:fgv2024"
+            ? `Prova oficial FGV 2024: <strong>${earned.toFixed(1)} de ${max.toFixed(1)} pontos</strong>; a questão 13 anulada foi omitida.`
+            : state.sim.type === "dataprev-proof:cebraspe2023"
+              ? `Pontuação líquida Cebraspe: <strong>${earned} de ${max}</strong> (+1 por acerto, −1 por erro e 0 em branco); cinco itens anulados foram omitidos.`
           : c.id === "ibge" && state.sim.type === "oficial"
             ? `Critério mínimo do edital: <strong>${ibgeCriterion ? "atingido" : "não atingido"}</strong> — 40% da prova e ao menos um acerto em cada disciplina.`
             : c.id === "cfaq"
               ? `Treino nacional concluído. Confirme critérios eliminatórios e duração no edital do órgão local.`
               : "";
-      return `<section class="diag"><div class="result"><span class="eyebrow">SIMULADO CONCLUÍDO</span><div class="score-circle" style="--score:${pct * 3.6}deg"><strong>${pct}%</strong></div><h1>${correct} de ${state.sim.pool.length} questões</h1><p>${officialNote} Em branco: ${blank}.</p><div class="sim-result-grid"><div><span>Acertos</span><strong>${correct}</strong></div><div><span>Erros</span><strong>${state.sim.pool.length - correct - blank}</strong></div><div><span>Em branco</span><strong>${blank}</strong></div><div><span>Marcadas</span><strong>${state.sim.marked.length}</strong></div>${by}</div><button class="primary" id="sim-reset">Novo simulado</button></div></section>`;
+      return `<section class="diag"><div class="result"><span class="eyebrow">SIMULADO CONCLUÍDO</span><div class="score-circle" style="--score:${pct * 3.6}deg"><strong>${pct}%</strong></div><h1>${correct} de ${state.sim.pool.length} questões</h1><p>${officialNote} Em branco: ${blank}.</p><div class="sim-result-grid"><div><span>Acertos</span><strong>${correct}</strong></div><div><span>Erros</span><strong>${wrong}</strong></div><div><span>Em branco</span><strong>${blank}</strong></div><div><span>Marcadas</span><strong>${state.sim.marked.length}</strong></div>${by}</div><button class="primary" id="sim-reset">Novo simulado</button></div></section>`;
     }
     const q = state.sim.pool[state.sim.index],
       selected = state.sim.responses[state.sim.index],
@@ -27197,7 +27263,7 @@
           `<button class="${i === state.sim.index ? "active" : ""} ${state.sim.responses[i] !== null ? "answered" : ""} ${state.sim.marked.includes(i) ? "marked" : ""}" data-sim-jump="${i}" title="Questão ${i + 1}">${i + 1}</button>`,
       )
       .join("");
-    return `<section class="diag"><div class="sim-progress"><span class="badge">Questão ${state.sim.index + 1}/${state.sim.pool.length}</span><span class="badge" id="sim-timer">⏱ ${fmtTime(remainingTime())}</span><span class="muted">${esc(simDiscipline(c, q))} · ${esc(q.topic)}</span></div><div class="diag-card"><div class="progress" style="margin-bottom:20px"><i style="width:${(answered / state.sim.pool.length) * 100}%"></i></div><h2>${esc(q.statement)}</h2>${questionExtras(c, q)}<div class="options">${q.options.map((o, i) => `<button class="option ${selected === i ? "selected" : ""}" data-sim-opt="${i}"><b class="letter">${String.fromCharCode(65 + i)}</b><span>${esc(o)}</span></button>`).join("")}</div><div class="lesson-footer"><button class="secondary" id="sim-prev" ${state.sim.index === 0 ? "disabled" : ""}>← Anterior</button><button class="secondary" id="sim-mark">${marked ? "★ Marcada" : "☆ Marcar para revisão"}</button><button class="primary" id="sim-next">${state.sim.index === state.sim.pool.length - 1 ? "Revisar grade" : "Próxima"} →</button></div><button class="danger" id="sim-finish" style="margin-top:12px">Finalizar simulado</button></div><div class="panel" style="margin-top:16px"><strong>Navegação</strong><p class="muted">Respondidas: ${answered}/${state.sim.pool.length}. Itens podem permanecer em branco.</p><div class="sim-nav-grid">${nav}</div></div></section>`;
+    return `<section class="diag"><div class="sim-progress"><span class="badge">Questão ${state.sim.index + 1}/${state.sim.pool.length}</span><span class="badge" id="sim-timer">⏱ ${fmtTime(remainingTime())}</span><span class="muted">${esc(simDiscipline(c, q))} · ${esc(q.topic)}</span></div><div class="diag-card"><div class="progress" style="margin-bottom:20px"><i style="width:${(answered / state.sim.pool.length) * 100}%"></i></div><h2>${esc(q.statement)}</h2>${questionExtras(c, q)}<div class="options">${q.options.map((o, i) => `<button class="option ${selected === i ? "selected" : ""}" data-sim-opt="${i}"><b class="letter">${q.board === "CEBRASPE" ? ["C", "E"][i] : String.fromCharCode(65 + i)}</b><span>${esc(o)}</span></button>`).join("")}</div><div class="lesson-footer"><button class="secondary" id="sim-prev" ${state.sim.index === 0 ? "disabled" : ""}>← Anterior</button><button class="secondary" id="sim-mark">${marked ? "★ Marcada" : "☆ Marcar para revisão"}</button><button class="primary" id="sim-next">${state.sim.index === state.sim.pool.length - 1 ? "Revisar grade" : "Próxima"} →</button></div><button class="danger" id="sim-finish" style="margin-top:12px">Finalizar simulado</button></div><div class="panel" style="margin-top:16px"><strong>Navegação</strong><p class="muted">Respondidas: ${answered}/${state.sim.pool.length}. Itens podem permanecer em branco.</p><div class="sim-nav-grid">${nav}</div></div></section>`;
   }
   function bindSimulation() {
     clearInterval(simTimerHandle);

@@ -11,7 +11,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const html = read('index.html');
 const app = read('app.js');
 const bootstrap = read('security-bootstrap.js');
-const runtime = [html, app, bootstrap, read('flashcards-engine.js'), read('adaptive-engine.js')].join('\n');
+const runtime = [html, app, bootstrap, read('dataprev-history-data.js'), read('flashcards-engine.js'), read('adaptive-engine.js')].join('\n');
 const checks = [];
 const failures = [];
 const assert = (condition, label) => {
@@ -129,7 +129,7 @@ const server = http.createServer((request, response) => {
   };
   if (!failures.length) {
     fs.writeFileSync(
-      path.join(root, 'AUDITORIA_SEGURANCA_V1.5.0.json'),
+      path.join(root, 'AUDITORIA_SEGURANCA_V1.6.0.json'),
       JSON.stringify(payload, null, 2) + '\n',
     );
   }

@@ -1,17 +1,19 @@
 # Pendências editoriais para atualizações futuras
 
-Este documento separa melhorias técnicas já entregues de expansões que dependem de documentos, confirmações ou decisões do responsável pelo projeto. A versão 1.5.0 funciona normalmente sem esses materiais.
+Este documento separa melhorias técnicas já entregues de expansões que dependem de documentos, confirmações ou decisões do responsável pelo projeto. A versão 1.6.0 funciona normalmente sem esses materiais.
 
 ## DATAPREV
 
+Já incorporado na versão 1.6.0: prova FGV 2024 e prova Cebraspe 2023 do Cargo 19, ambas com os respectivos gabaritos definitivos e exclusão dos itens anulados.
+
 Providenciar, quando disponíveis:
 
-- provas oficiais recentes da FGV ou da banca efetivamente contratada;
-- gabaritos definitivos e decisões de recursos;
+- provas oficiais posteriores a 2024 da FGV ou da banca efetivamente contratada;
+- decisões de recursos que contenham fundamentação útil para comentários individualizados;
 - edital consolidado e eventuais retificações;
 - versões oficiais atualizadas de normas e legislação cobradas.
 
-Uso futuro: ampliar a proporção de questões oficiais, revisar incidência e buscar pelo menos três questões bem comentadas por microlição.
+Uso futuro: atualizar a incidência, enriquecer comentários por alternativa e confrontar itens normativos antigos com a redação vigente.
 
 ## ASON
 
@@ -54,4 +56,3 @@ Uso futuro: substituir a indicação genérica de origem pela Capitania comprova
 ## Cuidados no envio
 
 Não encaminhe senhas, tokens, dados pessoais de alunos ou documentos que não possam ser redistribuídos. Para provas e gabaritos, prefira arquivos oficiais íntegros, acompanhados do endereço de publicação e da data de acesso.
-

@@ -1,4 +1,4 @@
-# Privacidade — Versa Concursos v1.5.0
+# Privacidade — Versa Concursos v1.6.0
 
 Última revisão: 09/08/2026.
 

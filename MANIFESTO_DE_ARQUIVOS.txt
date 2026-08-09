@@ -16,6 +16,9 @@ ARQUIVOS PRINCIPAIS
 2. cfaq-data.js
    Dados modulares da trilha CFAQ-MOC Nacional: módulos, microlições, questões, textos-base, vídeos e referências.
 
+2E. dataprev-history-data.js
+    Banco histórico DATAPREV com 184 questões oficiais válidas, textos-base, metadados de provas e gabaritos definitivos.
+
 2A. flashcards-priority-data.js
     Reúne 80 cartões estratégicos, a metodologia de incidência e as fontes oficiais.
 
@@ -90,10 +93,13 @@ DOCUMENTAÇÃO E FERRAMENTAS CFAQ-MOC
 18D. RELATORIO_IMPLEMENTACAO_ADAPTATIVA_V1.5.0.md e PENDENCIAS_EDITORIAIS_FUTURAS.md
      Funcionamento da nova camada adaptativa e materiais que dependem do responsável pelo projeto.
 
+18E. RELATORIO_INCORPORACAO_DATAPREV_HISTORICO_V1.6.0.md e documentos/dataprev/
+     Auditoria da incorporação FGV 2024/Cebraspe 2023, provas-fonte e rastreabilidade dos gabaritos.
+
 19. documentos/cfaq-moc/LEIA-ME.txt
     Escopo, fontes oficiais e limite da atribuição institucional.
 
-20. RELATORIO_AUDITORIA_SEGURANCA_V1.3.0.md, RELATORIO_AUDITORIA_SEGURANCA_V1.4.0.md, RELATORIO_AUDITORIA_SEGURANCA_V1.5.0.md, AUDITORIA_SEGURANCA_V1.5.0.json, PRIVACIDADE.md, SECURITY.md e GUIA_PUBLICACAO_SEGURA_GITHUB_PAGES.md
+20. Relatórios de auditoria de segurança v1.3.0 a v1.6.0, AUDITORIA_SEGURANCA_V1.6.0.json, PRIVACIDADE.md, SECURITY.md e GUIA_PUBLICACAO_SEGURA_GITHUB_PAGES.md
     Auditorias, transparência ao usuário, política de vulnerabilidades e checklist de publicação.
 
 21. tools/ e package.json
@@ -118,6 +124,14 @@ Não publique arquivos-fonte brutos, backups privados, credenciais ou dados pess
 
 O projeto é estático, não exige npm, compilação, banco de dados ou servidor próprio.
 O progresso é salvo no navegador e permanece separado por trilha.
+
+
+VERSÃO BANCO HISTÓRICO DATAPREV V1.6.0
+- 69 questões válidas da prova FGV 2024; questão 13 anulada omitida.
+- 115 itens válidos da prova Cebraspe 2023; cinco itens anulados omitidos.
+- Gabaritos definitivos, oito textos-base e três figuras vetoriais.
+- Simulados históricos na ordem original e pontuação líquida Cebraspe.
+- 442 questões no curso DATAPREV e 1.335 questões no projeto.
 
 
 VERSÃO ADAPTATIVA V1.5.0

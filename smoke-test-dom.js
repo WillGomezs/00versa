@@ -112,6 +112,30 @@ const server = http.createServer((request, response) => {
   document.querySelector('#cfaq-start-proof').click();
   result.proofSimLabel = document.querySelector('.sim-progress .badge')?.textContent;
   result.proofSource = document.querySelector('.question-source')?.textContent;
+  document.querySelector('[data-course="dataprev"]').click();
+  document.querySelector('[data-view="simulation"]').click();
+  result.dataprevSimChoices = document.querySelectorAll('[data-sim-start]').length;
+  document.querySelector('[data-sim-start="dataprev-proof:fgv2024"]').click();
+  result.fgvHistoricalLabel = document.querySelector('.sim-progress .badge')?.textContent;
+  result.fgvHistoricalSource = document.querySelector('.question-source')?.textContent;
+  result.fgvHistoricalOptions = document.querySelectorAll('[data-sim-opt]').length;
+  document.querySelector('[data-course="cfaq"]').click();
+  document.querySelector('[data-course="dataprev"]').click();
+  document.querySelector('[data-view="simulation"]').click();
+  document.querySelector('[data-sim-start="dataprev-proof:cebraspe2023"]').click();
+  result.cebHistoricalLabel = document.querySelector('.sim-progress .badge')?.textContent;
+  result.cebHistoricalSource = document.querySelector('.question-source')?.textContent;
+  result.cebHistoricalLetters = [...document.querySelectorAll('[data-sim-opt] .letter')].map((element) => element.textContent).join('');
+  const cebFirstCorrect = dom.window.DATAPREV_HISTORY_DATA.questions.find((question) => question.id === 'dp-ceb23-001').correct;
+  document.querySelector(`[data-sim-opt="${cebFirstCorrect}"]`).click();
+  document.querySelector('#sim-next').click();
+  const cebSecond = dom.window.DATAPREV_HISTORY_DATA.questions.find((question) => question.id === 'dp-ceb23-002');
+  document.querySelector(`[data-sim-opt="${(cebSecond.correct + 1) % 2}"]`).click();
+  document.querySelector('#sim-finish').click();
+  result.cebNetScore = document.querySelector('.result p')?.textContent;
+  const dataprevProgress = JSON.parse(dom.window.localStorage.getItem('versa-progress-dataprev'));
+  result.cebRecordedAttempts = dataprevProgress.adaptive.attempts.length;
+  result.cebRecordedErrors = dataprevProgress.errors.length;
   const checks = [
     result.courseCards === 4,
     result.dashboardTitle === 'CFAQ-MOC Nacional',
@@ -153,6 +177,16 @@ const server = http.createServer((request, response) => {
     result.flashcards_cfaq === '50 cartões',
     /^Questão 1\/\d+$/.test(result.proofSimLabel || ''),
     /Prova histórica: CFAQ/.test(result.proofSource || ''),
+    result.dataprevSimChoices === 7,
+    result.fgvHistoricalLabel === 'Questão 1/69',
+    /DATAPREV 2024 — FGV — Tipo 1/.test(result.fgvHistoricalSource || ''),
+    result.fgvHistoricalOptions === 5,
+    result.cebHistoricalLabel === 'Questão 1/115',
+    /DATAPREV 2023 — Cebraspe — Cargo 19/.test(result.cebHistoricalSource || ''),
+    result.cebHistoricalLetters === 'CE',
+    /Pontuação líquida Cebraspe: 0 de 115/.test(result.cebNetScore || ''),
+    result.cebRecordedAttempts === 2,
+    result.cebRecordedErrors === 1,
     errors.length === 0,
   ];
   dom.window.close();

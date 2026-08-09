@@ -1,17 +1,19 @@
 {
   "name": "versa-concursos-cfaq-moc-nacional",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": true,
   "description": "Versa Concursos endurecido para publicação estática, com trilhas e flashcards estratégicos.",
   "scripts": {
     "build:cfaq": "node tools/build-cfaq-course.js",
+    "build:dataprev-history": "node tools/build-dataprev-history.js",
     "validate:cfaq": "node tools/validate-cfaq-course.js",
+    "validate:dataprev-history": "node tools/validate-dataprev-history.js",
     "validate:flashcards": "node tools/validate-flashcards.js",
     "validate:videos": "node tools/validate-video-links.js",
     "validate:adaptive": "node tools/validate-adaptive-engine.js",
     "audit:security": "node tools/security-audit.js",
     "test:dom": "node tools/smoke-test-dom.js",
-    "test": "npm run validate:cfaq && npm run validate:flashcards && npm run validate:videos && npm run validate:adaptive && npm run test:dom && npm run audit:security",
+    "test": "npm run validate:cfaq && npm run validate:dataprev-history && npm run validate:flashcards && npm run validate:videos && npm run validate:adaptive && npm run test:dom && npm run audit:security",
     "checksums": "node tools/update-checksums.js"
   },
   "devDependencies": {
