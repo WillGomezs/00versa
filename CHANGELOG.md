@@ -1,5 +1,19 @@
 # Changelog
 
+## Plano inteligente e domínio adaptativo v1.5.0 — 09/08/2026
+
+- Criado motor adaptativo local, transparente e compatível com o progresso anterior.
+- Implementado plano diário por meta de tempo, combinando revisão, ponto fraco, conteúdo novo e flashcards.
+- Adicionados estados Não estudado, Em aprendizagem, Em consolidação e Dominado por microlição.
+- Diagnóstico ampliado com resultados por disciplina, módulo e lição.
+- Tentativas do diagnóstico passaram a alimentar domínio e caderno de erros.
+- Caderno de erros dividido entre itens ativos e superados; resolução exige dois acertos em dias diferentes.
+- Simulados e questões das lições passaram a atualizar o mesmo histórico adaptativo.
+- Revisões das lições agora usam intervalos progressivos conforme desempenho e repetição.
+- Feedback incorreto passa a mostrar a justificativa específica da alternativa quando disponível, preservando a explicação geral.
+- Corrigido o cálculo de domínio para não tratar lições ainda não estudadas como nota zero.
+- Adicionados teste especializado do motor, migração e plano diário, além de expansão do fluxo DOM.
+
 ## Thumbnails e capas audiovisuais v1.4.0 — 09/08/2026
 
 - Adicionadas thumbnails oficiais aos vídeos diretos das quatro trilhas.

@@ -1,4 +1,4 @@
-/* Versa Concursos — inicialização defensiva v1.4.0. */
+/* Versa Concursos — inicialização defensiva v1.5.0. */
 (() => {
   'use strict';
 

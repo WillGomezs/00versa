@@ -24,7 +24,7 @@ const sandbox = {
   console,
 };
 
-for (const filename of ['cfaq-data.js', 'flashcards-priority-data.js', 'flashcards-data.js', 'flashcards-engine.js']) {
+for (const filename of ['cfaq-data.js', 'flashcards-priority-data.js', 'flashcards-data.js', 'flashcards-engine.js', 'adaptive-engine.js']) {
   vm.runInNewContext(fs.readFileSync(path.join(root, filename), 'utf8'), sandbox, { filename });
 }
 

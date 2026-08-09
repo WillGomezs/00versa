@@ -1,4 +1,4 @@
-# Privacidade — Versa Concursos v1.4.0
+# Privacidade — Versa Concursos v1.5.0
 
 Última revisão: 09/08/2026.
 
@@ -17,6 +17,8 @@ As chaves pertencentes ao aplicativo começam com `versa-` e podem conter:
 - lições concluídas, pontuações, XP e revisões;
 - questões erradas e resultados de simulados;
 - agenda dos flashcards;
+- tentativas por questão, mapa de domínio e agenda adaptativa das lições;
+- estado ativo ou superado dos erros;
 - rascunhos editoriais locais.
 
 O botão **Apagar dados do Versa** remove somente essas chaves e preserva dados de outras aplicações hospedadas na mesma origem.

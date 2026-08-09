@@ -29,6 +29,7 @@ for (const filename of [
   'flashcards-priority-data.js',
   'flashcards-data.js',
   'flashcards-engine.js',
+  'adaptive-engine.js',
 ]) {
   vm.runInNewContext(fs.readFileSync(path.join(root, filename), 'utf8'), sandbox, { filename });
 }

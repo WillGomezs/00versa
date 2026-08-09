@@ -6,6 +6,9 @@ Status: **APROVADO**
 
 - Cartões de curso exibidos: 4.
 - Curso aberto: CFAQ-MOC Nacional.
+- Blocos do plano diário adaptativo: 2; prioridade inicial: Estratégias de leitura.
+- Indicador de domínio inicial: 0%.
+- Tentativa registrada no motor adaptativo: 1; erro ativo registrado: 1.
 - Flashcards CFAQ-MOC: 50 cartões; sessão iniciada em Cartão 1/10.
 - Resposta revelada: true; classificações disponíveis: 4.
 - Migração e salvamento: 1 cartão salvo; XP antigo preservado e atualizado para 6.

@@ -1,4 +1,4 @@
-/* Versa Concursos — aplicação endurecida v1.4.0. */
+/* Versa Concursos — aplicação adaptativa e endurecida v1.5.0. */
 (() => {
   "use strict";
   function buildDataprevCourse() {
@@ -25910,6 +25910,7 @@
     diagnostic: null,
     simulations: [],
     flashcards: { cards: {}, sessions: [] },
+    adaptive: { version: 1, attempts: [], lessonReviews: {} },
   });
   function normalizeProgress(raw) {
     const base = defaultProgress(),
@@ -25935,7 +25936,18 @@
       .slice(-1000);
     p.errors = (Array.isArray(source.errors) ? source.errors : [])
       .filter((item) => item && typeof item === "object")
-      .slice(-1000);
+      .slice(-1000)
+      .map((item) => ({
+        ...item,
+        questionId: String(item.questionId || "").slice(0, 100),
+        lessonId: String(item.lessonId || "").slice(0, 100),
+        selected: Number.isInteger(item.selected) ? item.selected : null,
+        status: item.status === "resolved" ? "resolved" : "active",
+        recoveryStreak: Math.min(2, Math.max(0, Number(item.recoveryStreak) || 0)),
+        recoveryDates: [...new Set(Array.isArray(item.recoveryDates) ? item.recoveryDates.filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)) : [])].slice(-2),
+        resolvedAt: /^\d{4}-\d{2}-\d{2}$/.test(item.resolvedAt || "") ? item.resolvedAt : null,
+      }))
+      .filter((item) => item.questionId && item.lessonId);
     p.simulations = (
       Array.isArray(source.simulations) ? source.simulations : []
     )
@@ -25944,6 +25956,22 @@
     p.flashcards = window.VERSA_FLASHCARDS_ENGINE
       ? window.VERSA_FLASHCARDS_ENGINE.normalizeStore(source.flashcards)
       : base.flashcards;
+    p.adaptive = window.VERSA_ADAPTIVE_ENGINE
+      ? window.VERSA_ADAPTIVE_ENGINE.normalizeStore(source.adaptive)
+      : base.adaptive;
+    for (const review of p.reviews) {
+      if (review?.lessonId && review?.due && !p.adaptive.lessonReviews[review.lessonId]) {
+        p.adaptive.lessonReviews[review.lessonId] = {
+          due: review.due,
+          intervalDays: 1,
+          ease: 2.3,
+          repetitions: 0,
+          lapses: 0,
+          lastScore: p.scores[review.lessonId] || 0,
+          lastReviewed: null,
+        };
+      }
+    }
     return p;
   }
   const emptyFlashState = () => ({
@@ -25961,7 +25989,7 @@
     lessonId: null,
     selected: {},
     answered: {},
-    diag: { index: 0, answers: [], selected: null, done: false },
+    diag: { index: 0, answers: [], details: [], selected: null, done: false },
     sim: null,
     flash: emptyFlashState(),
     adminTab: "overview",
@@ -25974,6 +26002,76 @@
       "versa-progress-" + id,
       JSON.stringify(normalizeProgress(p)),
     );
+  }
+  function recordQuestionAttempt(p, q, selected, kind) {
+    const correct = selected === q.correct;
+    const questionId = q.sourceId || q.id;
+    const originalQuestion = q.sourceId
+      ? course().questions.find((item) => item.id === questionId)
+      : q;
+    const originalSelectedIndex =
+      Number.isInteger(selected) && originalQuestion
+        ? originalQuestion.options.indexOf(q.options[selected])
+        : -1;
+    const recordedSelected = originalSelectedIndex >= 0 ? originalSelectedIndex : null;
+    p.adaptive = window.VERSA_ADAPTIVE_ENGINE.recordAttempt(p.adaptive, {
+      kind,
+      questionId,
+      lessonId: q.lessonId,
+      correct,
+      selected: recordedSelected,
+      date: today(),
+    });
+    let error = p.errors.find(
+      (item) => item.questionId === questionId && item.status !== "resolved",
+    );
+    if (!correct) {
+      if (!error) {
+        error = {
+          questionId,
+          lessonId: q.lessonId,
+          selected: recordedSelected,
+          date: today(),
+          status: "active",
+          recoveryStreak: 0,
+          recoveryDates: [],
+          resolvedAt: null,
+        };
+        p.errors.push(error);
+      } else {
+        error.selected = recordedSelected;
+        error.date = today();
+        error.recoveryStreak = 0;
+        error.recoveryDates = [];
+      }
+    } else if (error && !error.recoveryDates.includes(today())) {
+      error.recoveryDates.push(today());
+      error.recoveryDates = error.recoveryDates.slice(-2);
+      error.recoveryStreak = error.recoveryDates.length;
+      if (error.recoveryStreak >= 2) {
+        error.status = "resolved";
+        error.resolvedAt = today();
+      }
+    }
+    p.errors = p.errors.slice(-1000);
+    return correct;
+  }
+  function scheduleLessonReview(p, lessonId, score) {
+    p.adaptive = window.VERSA_ADAPTIVE_ENGINE.scheduleLesson(
+      p.adaptive,
+      lessonId,
+      score,
+      today(),
+    );
+    const record = p.adaptive.lessonReviews[lessonId];
+    p.reviews = p.reviews.filter((review) => review.lessonId !== lessonId);
+    p.reviews.push({
+      lessonId,
+      due: record.due,
+      intervalDays: record.intervalDays,
+      lastScore: record.lastScore,
+    });
+    p.reviews = p.reviews.slice(-1000);
   }
   function saveProfile() {
     state.profile = normalizeProfile(state.profile);
@@ -26176,12 +26274,25 @@
   function dashboard() {
     const c = course(),
       p = progress(),
-      next = nextLesson(c, p),
       due = p.reviews.filter((r) => r.due <= today()).length,
       fcDue = flashDueCount(c, p),
       pct = coursePct(c),
-      disciplines = [...new Set(c.units.map((u) => u.discipline || u.title))];
-    return `<section><div class="hero"><div class="hero-main"><span class="badge">${c.icon} ${esc(c.status)}</span><h1>${esc(c.name)}</h1><h2>${esc(c.subtitle)}</h2><p>${esc(c.description)}</p><div class="hero-actions"><button class="primary" data-lesson="${next.id}">${p.completed.length ? "Continuar" : "Iniciar"}: ${esc(next.title)} →</button><button class="secondary" data-view="path">Ver trilha completa</button><button class="secondary" data-view="flashcards">Estudar flashcards</button></div></div><div class="hero-side"><span>PROGRESSO DA TRILHA</span><strong>${pct}%</strong><p>${p.completed.length} de ${c.lessons.length} lições</p><button class="secondary" data-view="diagnostic">Fazer diagnóstico</button></div></div><div class="metrics">${metric("Revisões de hoje", due + fcDue, `${due} lições · ${fcDue} flashcards`)}${metric("Experiência", p.xp, "pontos acumulados")}${metric("Questões disponíveis", c.questions.length, "banco atual")}${metric("Simulados realizados", p.simulations.length, "nesta trilha")}</div><div class="dashboard-grid"><article class="panel"><div class="panel-head"><div><span class="eyebrow">SESSÃO RECOMENDADA</span><h2>Seu estudo de hoje</h2></div><span class="badge">${state.profile.dailyMinutes} min</span></div><div class="daily-list"><div class="daily-item"><b>1</b><div><strong>${due || fcDue ? "Revisar conteúdos pendentes" : "Aquecimento rápido"}</strong><small>${due || fcDue ? `${due} lições e ${fcDue} flashcards para revisar` : "10 flashcards novos de recuperação ativa"}</small></div></div><div class="daily-item"><b>2</b><div><strong>${esc(next.title)}</strong><small>${next.duration} minutos · ${esc(c.units.find((u) => u.id === next.unitId)?.title || "")}</small></div></div><div class="daily-item"><b>3</b><div><strong>Prática e correção</strong><small>Questões comentadas e registro dos erros</small></div></div></div></article><aside class="panel"><div class="panel-head"><div><span class="eyebrow">ESTRUTURA</span><h2>${esc(c.exam.note)}</h2></div></div><div class="exam-box"><div><span>Organização</span><strong>${esc(c.exam.board)}</strong></div><div><span>Questões</span><strong>${c.exam.questions}</strong></div><div><span>Duração</span><strong>${esc(c.exam.duration)}</strong></div><div><span>Conteúdo</span><strong>${disciplines.length} disciplinas · ${c.units.length} módulos</strong></div></div>${c.physical ? `<div class="physical"><h3>${esc(c.physical.title)}</h3><div class="physical-cols"><div><strong>Masculino</strong><ul>${c.physical.male.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div><div><strong>Feminino</strong><ul>${c.physical.female.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div></div></div>` : ""}</aside></div></section>`;
+      disciplines = [...new Set(c.units.map((u) => u.discipline || u.title))],
+      mastery = window.VERSA_ADAPTIVE_ENGINE.courseMastery(c, p),
+      plan = window.VERSA_ADAPTIVE_ENGINE.buildDailyPlan(
+        c,
+        p,
+        state.profile.dailyMinutes,
+      ),
+      priority = c.lessons.find((lesson) => lesson.id === plan.priorityLessonId) || nextLesson(c, p),
+      activeErrors = p.errors.filter((error) => error.status !== "resolved").length;
+    const planRows = plan.blocks
+      .map(
+        (block, index) =>
+          `<button class="daily-item plan-${block.type}" ${block.lessonId ? `data-lesson="${block.lessonId}"` : `data-view="${block.view}"`}><b>${index + 1}</b><div><strong>${esc(block.label)} — ${esc(block.title)}</strong><small>${block.minutes} min · ${esc(block.reason)}</small></div><em>→</em></button>`,
+      )
+      .join("");
+    return `<section><div class="hero"><div class="hero-main"><span class="badge">${c.icon} ${esc(c.status)}</span><h1>${esc(c.name)}</h1><h2>${esc(c.subtitle)}</h2><p>${esc(c.description)}</p><div class="adaptive-callout"><span>PLANO INTELIGENTE DE HOJE</span><strong>${esc(priority.title)}</strong><small>Prioridade calculada por revisões, erros, domínio e progressão.</small></div><div class="hero-actions"><button class="primary" data-lesson="${priority.id}">Estudar prioridade de hoje →</button><button class="secondary" data-view="path">Ver trilha completa</button><button class="secondary" data-view="flashcards">Estudar flashcards</button></div></div><div class="hero-side"><span>DOMÍNIO ESTIMADO</span><strong>${mastery.score}%</strong><p>${mastery.studied} de ${c.lessons.length} lições com evidências · ${pct}% concluído</p><button class="secondary" data-view="diagnostic">${p.diagnostic ? "Refazer diagnóstico" : "Fazer diagnóstico"}</button></div></div><div class="metrics">${metric("Revisões de hoje", due + fcDue, `${due} lições · ${fcDue} flashcards`)}${metric("Pontos fracos", activeErrors, "erros ativos")}${metric("Conteúdos dominados", mastery.counts.mastered, "confirmação espaçada")}${metric("Simulados realizados", p.simulations.length, "nesta trilha")}</div><div class="dashboard-grid"><article class="panel"><div class="panel-head"><div><span class="eyebrow">SESSÃO PERSONALIZADA</span><h2>Seu estudo de hoje</h2></div><span class="badge">${plan.totalMinutes} min</span></div><div class="daily-list">${planRows}</div><p class="adaptive-method">O plano é transparente e local: nenhuma decisão é enviada a servidor externo.</p></article><aside class="panel"><div class="panel-head"><div><span class="eyebrow">ESTRUTURA</span><h2>${esc(c.exam.note)}</h2></div></div><div class="exam-box"><div><span>Organização</span><strong>${esc(c.exam.board)}</strong></div><div><span>Questões</span><strong>${c.exam.questions}</strong></div><div><span>Duração</span><strong>${esc(c.exam.duration)}</strong></div><div><span>Conteúdo</span><strong>${disciplines.length} disciplinas · ${c.units.length} módulos</strong></div></div></aside></div></section>`;
   }
 
   function lessonVideos(c, l) {
@@ -26251,8 +26362,9 @@
               pre = (l.prerequisites || [])
                 .map((id) => c.lessons.find((x) => x.id === id)?.title)
                 .filter(Boolean),
-              vc = lessonVideos(c, l).length;
-            return `<button class="lesson-card ${done ? "done" : ""}" data-lesson="${l.id}"><b class="lesson-state">${done ? "✓" : l.order}</b><span><strong>${esc(l.title)}</strong><small>${esc(l.objective)}${pre.length ? ` · Pré: ${esc(pre[0])}` : ""}${vc ? ` · <span class="video-count">▶ ${vc} vídeo${vc > 1 ? "s" : ""}</span>` : ""}</small></span><em>${l.duration} min</em></button>`;
+              vc = lessonVideos(c, l).length,
+              mastery = window.VERSA_ADAPTIVE_ENGINE.lessonMastery(c, p, l);
+            return `<button class="lesson-card ${done ? "done" : ""} mastery-${mastery.status}" data-lesson="${l.id}"><b class="lesson-state">${mastery.status === "mastered" ? "✓" : done ? "↻" : l.order}</b><span><strong>${esc(l.title)}</strong><small>${esc(l.objective)}${pre.length ? ` · Pré: ${esc(pre[0])}` : ""}${vc ? ` · <span class="video-count">▶ ${vc} vídeo${vc > 1 ? "s" : ""}</span>` : ""}</small></span><span class="mastery-badge">${esc(mastery.label)}${mastery.status !== "not-started" ? ` · ${mastery.score}%` : ""}</span><em>${l.duration} min</em></button>`;
           })
           .join("")}</div></article>`;
       })
@@ -26276,8 +26388,9 @@
       pre = (l.prerequisites || [])
         .map((id) => c.lessons.find((x) => x.id === id))
         .filter(Boolean),
-      vids = lessonVideos(c, l);
-    return `<section class="lesson-shell"><div class="lesson-nav"><button class="ghost" data-view="path">← Voltar à trilha</button><span class="badge">${p.completed.includes(l.id) ? "Lição concluída" : "Em aprendizagem"}</span></div><div class="lesson-hero"><span class="eyebrow">${esc(c.units.find((u) => u.id === l.unitId)?.title || "LIÇÃO")}</span><h1>${esc(l.title)}</h1><p>${esc(l.objective)}</p><div class="lesson-meta"><span>◷ ${l.duration} min</span><span>${esc(l.difficulty)}</span>${l.tags.map((t) => `<span>${esc(t)}</span>`).join("")}${vids.length ? `<span class="video-count">▶ ${vids.length} videoaula${vids.length > 1 ? "s" : ""}</span>` : ""}</div></div>${pre.length ? `<article class="lesson-section"><span class="eyebrow">PRÉ-REQUISITOS</span><h2>Base recomendada</h2><p>Esta lição se conecta a: ${pre.map((x) => `<strong>${esc(x.title)}</strong>`).join(", ")}. Você pode continuar livremente e retornar à base sempre que necessário.</p></article>` : ""}<article class="lesson-section"><h2>Entenda o conceito</h2><p>${esc(l.summary)}</p><ul class="key-list">${l.points.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></article><article class="lesson-section"><h2>Exemplo aplicado</h2><p>${esc(l.example)}</p></article>${vids.length ? `<article class="lesson-section"><span class="eyebrow">VIDEOAULAS COMPLEMENTARES</span><h2>Veja o conceito por outra explicação</h2><p class="muted">As aulas foram selecionadas por aderência ao Anexo II, clareza e nível de profundidade. O texto e os exercícios da trilha continuam sendo a base obrigatória.</p><div class="video-grid">${vids.map(videoCard).join("")}</div><div class="video-note">As thumbnails dos vídeos diretos são carregadas do YouTube com política de não envio do endereço de origem. Vídeos, playlists, coleções e buscas só são abertos após o clique.</div></article>` : ""}<article class="lesson-section recall"><span class="eyebrow">RECUPERAÇÃO ATIVA</span><h2>Feche o material por alguns segundos</h2><p>${esc(l.recall)}</p></article>${qs.map((q, i) => quizBlock(q, i)).join("")}<div class="lesson-footer"><button class="secondary" data-view="path">Voltar à trilha</button><button class="primary" id="finish-lesson" ${qs.every((q) => state.answered[q.id]) ? "" : "disabled"}>${p.completed.includes(l.id) ? "Reforçar e agendar revisão" : "Concluir lição e agendar revisão"} →</button></div></section>`;
+      vids = lessonVideos(c, l),
+      mastery = window.VERSA_ADAPTIVE_ENGINE.lessonMastery(c, p, l);
+    return `<section class="lesson-shell"><div class="lesson-nav"><button class="ghost" data-view="path">← Voltar à trilha</button><span class="badge">${esc(mastery.label)}${mastery.status !== "not-started" ? ` · ${mastery.score}%` : ""}</span></div><div class="lesson-hero"><span class="eyebrow">${esc(c.units.find((u) => u.id === l.unitId)?.title || "LIÇÃO")}</span><h1>${esc(l.title)}</h1><p>${esc(l.objective)}</p><div class="lesson-meta"><span>◷ ${l.duration} min</span><span>${esc(l.difficulty)}</span>${l.tags.map((t) => `<span>${esc(t)}</span>`).join("")}${vids.length ? `<span class="video-count">▶ ${vids.length} videoaula${vids.length > 1 ? "s" : ""}</span>` : ""}</div></div>${pre.length ? `<article class="lesson-section"><span class="eyebrow">PRÉ-REQUISITOS</span><h2>Base recomendada</h2><p>Esta lição se conecta a: ${pre.map((x) => `<strong>${esc(x.title)}</strong>`).join(", ")}. Você pode continuar livremente e retornar à base sempre que necessário.</p></article>` : ""}<article class="lesson-section"><h2>Entenda o conceito</h2><p>${esc(l.summary)}</p><ul class="key-list">${l.points.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></article><article class="lesson-section"><h2>Exemplo aplicado</h2><p>${esc(l.example)}</p></article>${vids.length ? `<article class="lesson-section"><span class="eyebrow">VIDEOAULAS COMPLEMENTARES</span><h2>Veja o conceito por outra explicação</h2><p class="muted">As aulas foram selecionadas por aderência ao Anexo II, clareza e nível de profundidade. O texto e os exercícios da trilha continuam sendo a base obrigatória.</p><div class="video-grid">${vids.map(videoCard).join("")}</div><div class="video-note">As thumbnails dos vídeos diretos são carregadas do YouTube com política de não envio do endereço de origem. Vídeos, playlists, coleções e buscas só são abertos após o clique.</div></article>` : ""}<article class="lesson-section recall"><span class="eyebrow">RECUPERAÇÃO ATIVA</span><h2>Feche o material por alguns segundos</h2><p>${esc(l.recall)}</p></article>${qs.map((q, i) => quizBlock(q, i)).join("")}<div class="lesson-footer"><button class="secondary" data-view="path">Voltar à trilha</button><button class="primary" id="finish-lesson" ${qs.every((q) => state.answered[q.id]) ? "" : "disabled"}>${p.completed.includes(l.id) ? "Reforçar e agendar revisão" : "Concluir lição e agendar revisão"} →</button></div></section>`;
   }
   function questionExtras(c, q) {
     const tb = q.textBaseId && c.textBases && c.textBases[q.textBaseId],
@@ -26287,7 +26400,11 @@
   function quizBlock(q, i) {
     const sel = state.selected[q.id],
       ans = state.answered[q.id],
-      c = course();
+      c = course(),
+      feedbackText =
+        ans && sel !== q.correct && q.wrong?.[sel]
+          ? q.wrong[sel]
+          : q.explanation;
     return `<article class="quiz-card"><span class="eyebrow">QUESTÃO ${i + 1} · ${esc(q.topic)}</span><h3>${esc(q.statement)}</h3>${questionExtras(c, q)}<div class="options">${q.options
       .map((o, j) => {
         let cls = sel === j ? "selected " : "";
@@ -26299,7 +26416,7 @@
       })
       .join(
         "",
-      )}</div><button class="primary" data-submit="${q.id}" ${sel === undefined || ans ? "disabled" : ""} style="margin-top:12px">Corrigir resposta</button>${ans ? `<div class="feedback"><strong>${sel === q.correct ? "Resposta correta." : "Resposta incorreta."}</strong><br>${esc(q.explanation)}</div>` : ""}</article>`;
+      )}</div><button class="primary" data-submit="${q.id}" ${sel === undefined || ans ? "disabled" : ""} style="margin-top:12px">Corrigir resposta</button>${ans ? `<div class="feedback"><strong>${sel === q.correct ? "Resposta correta." : "Resposta incorreta."}</strong><br>${esc(feedbackText)}${sel !== q.correct && feedbackText !== q.explanation ? `<details><summary>Ver explicação geral</summary><p>${esc(q.explanation)}</p></details>` : ""}</div>` : ""}</article>`;
   }
   function bindLesson() {
     $$("[data-q]").forEach(
@@ -26314,19 +26431,11 @@
         (b.onclick = () => {
           const c = course(),
             q = c.questions.find((x) => x.id === b.dataset.submit),
-            sel = state.selected[q.id];
+            sel = state.selected[q.id],
+            p = progress();
           state.answered[q.id] = true;
-          if (sel !== q.correct) {
-            const p = progress();
-            p.errors.push({
-              questionId: q.id,
-              lessonId: q.lessonId,
-              selected: sel,
-              date: today(),
-            });
-            p.errors = p.errors.slice(-1000);
-            saveProgress(p);
-          }
+          recordQuestionAttempt(p, q, sel, "lesson");
+          saveProgress(p);
           render();
         }),
     );
@@ -26343,9 +26452,7 @@
       if (!p.completed.includes(l.id)) p.completed.push(l.id);
       p.scores[l.id] = Math.max(p.scores[l.id] || 0, score);
       p.xp += 20 + Math.round(score / 10);
-      p.reviews = p.reviews.filter((r) => r.lessonId !== l.id);
-      p.reviews.push({ lessonId: l.id, due: addDays(score === 100 ? 3 : 1) });
-      p.reviews = p.reviews.slice(-1000);
+      scheduleLessonReview(p, l.id, score);
       saveProgress(p);
       state.view = "path";
       render();
@@ -26361,7 +26468,8 @@
             .map((r) => {
               const l = c.lessons.find((x) => x.id === r.lessonId);
               if (!l) return "";
-              return `<article class="review-row"><b>↻</b><div><strong>${esc(l.title)}</strong><small>${r.due <= today() ? "Revisão disponível agora" : "Agendada para " + new Date(r.due + "T12:00:00").toLocaleDateString("pt-BR")}</small></div><button class="secondary" data-lesson="${l.id}">Revisar</button></article>`;
+              const adaptive = p.adaptive.lessonReviews[l.id] || r;
+              return `<article class="review-row"><b>↻</b><div><strong>${esc(l.title)}</strong><small>${r.due <= today() ? "Revisão disponível agora" : "Agendada para " + new Date(r.due + "T12:00:00").toLocaleDateString("pt-BR")} · intervalo ${adaptive.intervalDays || 1} dia${adaptive.intervalDays === 1 ? "" : "s"} · último resultado ${adaptive.lastScore ?? p.scores[l.id] ?? 0}%</small></div><button class="secondary" data-lesson="${l.id}">Revisar</button></article>`;
             })
             .join("")}</div>`
         : '<div class="empty">Conclua uma lição para criar sua primeira revisão.</div>'
@@ -26630,37 +26738,41 @@
 
   function errors() {
     const c = course(),
-      p = progress();
-    return `<section><div class="page-head"><div><span class="eyebrow">CADERNO AUTOMÁTICO</span><h1>Seus erros</h1><p>O erro é registrado para direcionar reforço e evitar repetição.</p></div><span class="badge">${p.errors.length} registros</span></div>${
-      p.errors.length
-        ? `<div class="list-grid">${p.errors
-            .slice()
-            .reverse()
-            .map((e) => {
-              const q = c.questions.find((x) => x.id === e.questionId),
-                l = c.lessons.find((x) => x.id === e.lessonId);
-              if (!q || !l) return "";
-              return `<article class="error-row"><b>!</b><div><strong>${esc(q.topic)} — ${esc(l.title)}</strong><small>${esc(q.statement)}</small><small>Marcada: ${String.fromCharCode(65 + (e.selected ?? 0))} · Correta: ${String.fromCharCode(65 + q.correct)}</small></div><button class="secondary" data-lesson="${l.id}">Reforçar</button></article>`;
-            })
-            .join("")}</div>`
-        : '<div class="empty">Nenhum erro registrado nesta trilha.</div>'
-    }</section>`;
+      p = progress(),
+      active = p.errors.filter((error) => error.status !== "resolved"),
+      resolved = p.errors.filter((error) => error.status === "resolved");
+    const rows = (items, solved = false) => items
+      .slice()
+      .reverse()
+      .map((error) => {
+        const q = c.questions.find((question) => question.id === error.questionId),
+          lesson = c.lessons.find((item) => item.id === error.lessonId);
+        if (!q || !lesson) return "";
+        const selected = Number.isInteger(error.selected)
+          ? String.fromCharCode(65 + error.selected)
+          : "não registrada/em branco";
+        return `<article class="error-row ${solved ? "resolved" : ""}"><b>${solved ? "✓" : "!"}</b><div><strong>${esc(q.topic)} — ${esc(lesson.title)}</strong><small>${esc(q.statement)}</small><small>Marcada: ${selected} · Correta: ${String.fromCharCode(65 + q.correct)}</small><span class="error-progress">${solved ? `Superado em ${new Date(error.resolvedAt + "T12:00:00").toLocaleDateString("pt-BR")}` : `${error.recoveryStreak || 0}/2 confirmações corretas em dias diferentes`}</span></div>${solved ? '<span class="badge">Superado</span>' : `<button class="secondary" data-lesson="${lesson.id}">Reforçar</button>`}</article>`;
+      })
+      .join("");
+    return `<section><div class="page-head"><div><span class="eyebrow">CADERNO ADAPTATIVO</span><h1>Seus erros</h1><p>Um erro fica ativo até o conhecimento ser confirmado corretamente em dois dias diferentes.</p></div><span class="badge">${active.length} ativos · ${resolved.length} superados</span></div>${active.length ? `<h2>Em correção</h2><div class="list-grid">${rows(active)}</div>` : '<div class="empty">Nenhum erro ativo nesta trilha.</div>'}${resolved.length ? `<h2 class="resolved-title">Superados</h2><div class="list-grid">${rows(resolved, true)}</div>` : ""}</section>`;
   }
   function performance() {
     const c = course(),
       p = progress(),
-      vals = Object.values(p.scores),
-      avg = vals.length
-        ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
-        : 0,
+      adaptive = window.VERSA_ADAPTIVE_ENGINE.courseMastery(c, p),
+      avg = adaptive.score,
+      activeErrors = p.errors.filter((error) => error.status !== "resolved").length,
       disciplines = [...new Set(c.units.map((u) => u.discipline || u.title))];
     const scoreForLessons = (ls) => {
-      const scores = ls.map((l) => p.scores[l.id] || 0);
-      return Math.round(
-        scores.reduce((a, b) => a + b, 0) / Math.max(scores.length, 1),
-      );
+      const scores = ls
+        .map((lesson) => window.VERSA_ADAPTIVE_ENGINE.lessonMastery(c, p, lesson))
+        .filter((item) => item.status !== "not-started")
+        .map((item) => item.score);
+      return scores.length
+        ? Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length)
+        : 0;
     };
-    return `<section><div class="page-head"><div><span class="eyebrow">ANÁLISE DE DOMÍNIO</span><h1>Desempenho em ${esc(c.shortName)}</h1><p>O painel considera conclusão, aproveitamento e prática distribuída.</p></div></div><div class="metrics">${metric("Lições concluídas", p.completed.length, "de " + c.lessons.length)}${metric("Aproveitamento", avg + "%", "nas lições avaliadas")}${metric("Experiência", p.xp, "pontos")}${metric("Erros registrados", p.errors.length, "para reforço")}</div><div class="dashboard-grid"><article class="panel"><div class="panel-head"><div><span class="eyebrow">DOMÍNIO POR DISCIPLINA</span><h2>Visão geral</h2></div></div><div class="mastery">${disciplines
+    return `<section><div class="page-head"><div><span class="eyebrow">ANÁLISE DE DOMÍNIO</span><h1>Desempenho em ${esc(c.shortName)}</h1><p>O painel considera desempenho, recuperação ativa, erros e prática distribuída.</p></div></div><div class="metrics">${metric("Lições concluídas", p.completed.length, "de " + c.lessons.length)}${metric("Domínio estimado", avg + "%", "somente no conteúdo estudado")}${metric("Experiência", p.xp, "pontos")}${metric("Erros ativos", activeErrors, "aguardando confirmação")}</div><div class="dashboard-grid"><article class="panel"><div class="panel-head"><div><span class="eyebrow">DOMÍNIO POR DISCIPLINA</span><h2>Visão geral</h2></div></div><div class="mastery">${disciplines
       .map((d) => {
         const unitIds = c.units
             .filter((u) => (u.discipline || u.title) === d)
@@ -26700,15 +26812,34 @@
     }<div class="page-head" style="margin-top:36px"><div><span class="eyebrow">BIBLIOGRAFIA E DOCUMENTOS</span><h2>Fontes curriculares</h2></div></div><div class="source-list">${c.resources.map((r, i) => { const url=safeExternalUrl(r.url); return `<article class="resource-row"><b>${i + 1}</b><div><strong>${esc(r.title)}</strong><small>${esc(r.type)}</small><p>${esc(r.description)}</p>${url!=="#" ? `<a class="secondary" href="${esc(url)}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" style="display:inline-block;margin-top:8px">Abrir material ↗</a>` : ""}</div></article>`; }).join("")}</div><article class="panel" style="margin-top:18px"><span class="eyebrow">FONTES DA TRILHA</span>${c.references.map((x) => `<p>✓ ${esc(x)}</p>`).join("")}<p>✓ Videoaulas externas em português — curadoria Versa Concursos, revisão ${esc(c.videoReviewDate || "não informada")}</p></article></section>`;
   }
   function resetDiag() {
-    state.diag = { index: 0, answers: [], selected: null, done: false };
+    state.diag = {
+      index: 0,
+      answers: [],
+      details: [],
+      selected: null,
+      done: false,
+    };
   }
   function diagnostic() {
     const c = course(),
       ids = c.diagnosticIds;
     if (state.diag.done) {
       const correct = state.diag.answers.filter(Boolean).length,
-        score = Math.round((correct / ids.length) * 100);
-      return `<section class="diag"><div class="result"><span class="eyebrow">DIAGNÓSTICO CONCLUÍDO</span><div class="score-circle" style="--score:${score * 3.6}deg"><strong>${score}%</strong></div><h1>${score >= 80 ? "Base sólida" : score >= 50 ? "Base parcial identificada" : "Começaremos pelos fundamentos"}</h1><p class="muted">Resultado salvo na trilha ${esc(c.name)}. O diagnóstico não bloqueia conteúdos.</p><button class="primary" id="diag-reset">Refazer diagnóstico</button></div></section>`;
+        score = Math.round((correct / ids.length) * 100),
+        summary = window.VERSA_ADAPTIVE_ENGINE.diagnosticSummary(
+          c,
+          state.diag.details,
+        ),
+        priority = c.lessons.find(
+          (lesson) => lesson.id === summary.weakLessonIds[0],
+        );
+      const rows = summary.disciplines
+        .map(
+          (item) =>
+            `<div class="diagnostic-row"><span><strong>${esc(item.name)}</strong><small>${item.correct}/${item.total} acertos</small></span><div class="progress"><i style="width:${item.score}%;background:${c.accent}"></i></div><b>${item.score}%</b></div>`,
+        )
+        .join("");
+      return `<section class="diag"><div class="result diagnostic-result"><span class="eyebrow">DIAGNÓSTICO CONCLUÍDO</span><div class="score-circle" style="--score:${score * 3.6}deg"><strong>${score}%</strong></div><h1>${score >= 80 ? "Base sólida" : score >= 50 ? "Base parcial identificada" : "Começaremos pelos fundamentos"}</h1><p class="muted">O resultado agora alimenta seu mapa de domínio, caderno de erros e plano diário.</p><div class="diagnostic-breakdown">${rows}</div><div class="hero-actions">${priority ? `<button class="primary" data-lesson="${priority.id}">Estudar primeiro ponto fraco →</button>` : ""}<button class="secondary" data-view="performance">Ver mapa de domínio</button><button class="ghost" id="diag-reset">Refazer diagnóstico</button></div></div></section>`;
     }
     const q = c.questions.find((x) => x.id === ids[state.diag.index]);
     return `<section class="diag"><div class="diag-top"><span class="badge">${state.diag.index + 1}/${ids.length}</span><span class="muted">${esc(q.topic)}</span></div><div class="diag-card"><div class="progress" style="margin-bottom:20px"><i style="width:${(state.diag.index / ids.length) * 100}%"></i></div><h2>${esc(q.statement)}</h2>${questionExtras(c, q)}<div class="options">${q.options.map((o, i) => `<button class="option ${state.diag.selected === i ? "selected" : ""}" data-diag="${i}"><b class="letter">${String.fromCharCode(65 + i)}</b><span>${esc(o)}</span></button>`).join("")}</div><button class="primary" id="diag-next" ${state.diag.selected === null ? "disabled" : ""} style="margin-top:15px">${state.diag.index === ids.length - 1 ? "Ver resultado" : "Próxima questão"} →</button></div></section>`;
@@ -26724,20 +26855,36 @@
     $("#diag-next")?.addEventListener("click", () => {
       const c = course(),
         ids = c.diagnosticIds,
-        q = c.questions.find((x) => x.id === ids[state.diag.index]);
-      state.diag.answers.push(state.diag.selected === q.correct);
+        q = c.questions.find((x) => x.id === ids[state.diag.index]),
+        selected = state.diag.selected,
+        p = progress(),
+        correct = recordQuestionAttempt(p, q, selected, "diagnostic");
+      state.diag.answers.push(correct);
+      state.diag.details.push({
+        questionId: q.id,
+        lessonId: q.lessonId,
+        selected,
+        correct,
+      });
       state.diag.selected = null;
       if (state.diag.index === ids.length - 1) {
         state.diag.done = true;
-        const p = progress();
+        const summary = window.VERSA_ADAPTIVE_ENGINE.diagnosticSummary(
+          c,
+          state.diag.details,
+        );
         p.diagnostic = {
           score: Math.round(
             (state.diag.answers.filter(Boolean).length / ids.length) * 100,
           ),
           date: today(),
+          details: state.diag.details.slice(),
+          disciplines: summary.disciplines,
+          units: summary.units,
+          weakLessonIds: summary.weakLessonIds,
         };
-        saveProgress(p);
       } else state.diag.index++;
+      saveProgress(p);
       render();
     });
     $("#diag-reset")?.addEventListener("click", () => {
@@ -26936,18 +27083,15 @@
     state.sim.pool.forEach((q, i) => {
       const w = simWeight(c, q);
       max += w;
-      if (state.sim.responses[i] === q.correct) {
+      const isCorrect = recordQuestionAttempt(
+        p,
+        q,
+        state.sim.responses[i],
+        "simulation",
+      );
+      if (isCorrect) {
         earned += w;
         correct++;
-      } else {
-        const sid = q.sourceId || q.id;
-        if (!p.errors.some((e) => e.questionId === sid))
-          p.errors.push({
-            questionId: sid,
-            lessonId: q.lessonId,
-            date: today(),
-            next: today(),
-          });
       }
     });
     const pct = Math.round((earned / max) * 100);

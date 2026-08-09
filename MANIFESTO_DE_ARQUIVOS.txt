@@ -25,6 +25,9 @@ ARQUIVOS PRINCIPAIS
 2C. flashcards-engine.js
     Motor local de repetição espaçada, migração e agendamento dos cartões.
 
+2D. adaptive-engine.js
+    Motor de domínio por microlição, plano diário e revisão adaptativa das lições.
+
 3. assets/cfaq/
    Imagens extraídas das questões CFAQ-MOC, sem Base64 no HTML principal.
 
@@ -84,10 +87,13 @@ DOCUMENTAÇÃO E FERRAMENTAS CFAQ-MOC
 18C. RELATORIO_AUDITORIA_VIDEOAULAS_V1.3.1.md e AUDITORIA_VIDEOAULAS_V1.3.1.json
      Revisão dos 197 recursos audiovisuais, substituições efetuadas e validação automática.
 
+18D. RELATORIO_IMPLEMENTACAO_ADAPTATIVA_V1.5.0.md e PENDENCIAS_EDITORIAIS_FUTURAS.md
+     Funcionamento da nova camada adaptativa e materiais que dependem do responsável pelo projeto.
+
 19. documentos/cfaq-moc/LEIA-ME.txt
     Escopo, fontes oficiais e limite da atribuição institucional.
 
-20. RELATORIO_AUDITORIA_SEGURANCA_V1.3.0.md, RELATORIO_AUDITORIA_SEGURANCA_V1.4.0.md, AUDITORIA_SEGURANCA_V1.4.0.json, PRIVACIDADE.md, SECURITY.md e GUIA_PUBLICACAO_SEGURA_GITHUB_PAGES.md
+20. RELATORIO_AUDITORIA_SEGURANCA_V1.3.0.md, RELATORIO_AUDITORIA_SEGURANCA_V1.4.0.md, RELATORIO_AUDITORIA_SEGURANCA_V1.5.0.md, AUDITORIA_SEGURANCA_V1.5.0.json, PRIVACIDADE.md, SECURITY.md e GUIA_PUBLICACAO_SEGURA_GITHUB_PAGES.md
     Auditorias, transparência ao usuário, política de vulnerabilidades e checklist de publicação.
 
 21. tools/ e package.json
@@ -112,6 +118,16 @@ Não publique arquivos-fonte brutos, backups privados, credenciais ou dados pess
 
 O projeto é estático, não exige npm, compilação, banco de dados ou servidor próprio.
 O progresso é salvo no navegador e permanece separado por trilha.
+
+
+VERSÃO ADAPTATIVA V1.5.0
+- Plano diário compatível com a meta de tempo do aluno.
+- Estados Não estudado, Em aprendizagem, Em consolidação e Dominado por microlição.
+- Diagnóstico detalhado por disciplina e identificação de pontos fracos.
+- Caderno de erros com itens ativos e superados após dois acertos em dias diferentes.
+- Revisão de lições com intervalos progressivos conforme desempenho.
+- Feedback específico por alternativa quando o banco possui esse comentário.
+- Migração do progresso anterior preservada.
 
 
 VERSÃO THUMBNAILS V1.4.0

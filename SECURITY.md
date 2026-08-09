@@ -2,7 +2,7 @@
 
 ## Versão suportada
 
-A versão mantida é a **1.4.x**. Versões anteriores não contêm todas as proteções descritas na auditoria atual.
+A versão mantida é a **1.5.x**. Versões anteriores não contêm todas as proteções descritas na auditoria atual.
 
 ## Como relatar uma vulnerabilidade
 

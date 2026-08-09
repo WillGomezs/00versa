@@ -95,7 +95,15 @@ As questões autorais foram criadas para fixação e aproximação ao estilo dos
 
 ### Revisão espaçada
 
-A plataforma mantém uma fila de conteúdos para revisão. O objetivo é evitar que o aluno apenas conclua aulas e esqueça o assunto, priorizando retenção e recuperação ativa.
+A plataforma mantém uma fila de conteúdos para revisão. A partir da versão 1.5.0, o intervalo das lições varia conforme o resultado e o histórico: baixo desempenho retorna mais cedo; resultados confirmados ampliam progressivamente o intervalo.
+
+### Plano inteligente e mapa de domínio
+
+O plano diário combina quatro sinais mantidos apenas no navegador: revisões vencidas, erros ativos, domínio estimado e próxima etapa elegível da trilha. A meta de 20 a 90 minutos é dividida entre revisão, ponto fraco, conteúdo novo e flashcards.
+
+Cada microlição pode aparecer como **Não estudada**, **Em aprendizagem**, **Em consolidação** ou **Dominada**. Domínio não depende de uma única nota: exige bom desempenho e confirmação em momentos diferentes. O cálculo considera questões, resultado da lição, flashcards, erros ativos e prática espaçada.
+
+O diagnóstico deixou de salvar apenas uma porcentagem geral. Ele agora registra o resultado por disciplina, módulo e microlição, alimentando o plano diário e o caderno de erros.
 
 ### Flashcards adaptativos
 
@@ -117,7 +125,7 @@ A prioridade não é apresentada como previsão. No DATAPREV ela cruza a prova F
 
 ### Caderno de erros
 
-Os erros ficam registrados por trilha e podem ser revisitados posteriormente. O registro inclui a questão, a lição relacionada e a data da tentativa.
+Os erros ficam registrados por trilha e podem ser revisitados posteriormente. Um erro permanece **ativo** até o aluno acertar novamente em dois dias diferentes; depois passa para a seção **Superados**. Tentativas de lições, diagnóstico e simulados participam desse ciclo.
 
 ### Diagnóstico
 
@@ -546,6 +554,7 @@ versa-concursos-multitrilhas/
 ├── flashcards-priority-data.js # 80 cartões e metodologia de alta incidência
 ├── flashcards-data.js      # Geração e integração do catálogo de 421 cartões
 ├── flashcards-engine.js    # Agendamento e repetição espaçada
+├── adaptive-engine.js      # Domínio, plano diário e revisão de lições
 ├── logo.svg                # Identidade visual usada pelo site
 ├── README.md               # Documentação do projeto
 ├── MATRIZ_CURRICULAR_IBGE.md
@@ -559,7 +568,10 @@ versa-concursos-multitrilhas/
 ├── AUDITORIA_VIDEOAULAS_V1.3.1.json
 ├── RELATORIO_AUDITORIA_SEGURANCA_V1.3.0.md
 ├── RELATORIO_AUDITORIA_SEGURANCA_V1.4.0.md
-├── AUDITORIA_SEGURANCA_V1.4.0.json
+├── RELATORIO_AUDITORIA_SEGURANCA_V1.5.0.md
+├── AUDITORIA_SEGURANCA_V1.5.0.json
+├── RELATORIO_IMPLEMENTACAO_ADAPTATIVA_V1.5.0.md
+├── PENDENCIAS_EDITORIAIS_FUTURAS.md
 ├── PRIVACIDADE.md
 ├── SECURITY.md
 ├── GUIA_PUBLICACAO_SEGURA_GITHUB_PAGES.md
@@ -636,7 +648,7 @@ Consulte `PRIVACIDADE.md` para a descrição completa.
 
 ## Segurança da publicação
 
-A versão 1.3.0 adicionou CSP, política `no-referrer`, validação de URLs e imagens, limites de armazenamento e testes contra XSS. Na versão 1.4.0, a CSP foi ajustada para permitir somente thumbnails em `i.ytimg.com`; iframes, reprodução incorporada e outros hosts continuam bloqueados. Os relatórios técnicos estão em `RELATORIO_AUDITORIA_SEGURANCA_V1.3.0.md` e `RELATORIO_AUDITORIA_SEGURANCA_V1.4.0.md`.
+A versão 1.3.0 adicionou CSP, política `no-referrer`, validação de URLs e imagens, limites de armazenamento e testes contra XSS. Na versão 1.4.0, a CSP foi ajustada para permitir somente thumbnails em `i.ytimg.com`; iframes, reprodução incorporada e outros hosts continuam bloqueados. A versão 1.5.0 normaliza e limita também o histórico adaptativo. Os relatórios técnicos mais recentes são `RELATORIO_AUDITORIA_SEGURANCA_V1.4.0.md` e `RELATORIO_AUDITORIA_SEGURANCA_V1.5.0.md`.
 
 Esses controles foram orientados por ISO/IEC 27001, 27002, 27701 e 27017, LGPD, OWASP e NIST SSDF, mas **não constituem certificação ISO nem garantia de risco zero**. A conta GitHub, o HTTPS, o domínio e futuras alterações continuam sob responsabilidade de quem publica.
 
@@ -710,7 +722,7 @@ Para manter o projeto confiável:
 
 - catalogar e comentar provas históricas da ASON;
 - aumentar o banco de questões no estilo das bancas;
-- adicionar mapas mentais e resumos de revisão;
+- adicionar mapas mentais e resumos de revisão quando houver uma linguagem visual definida;
 - criar exportação e importação do progresso;
 - adicionar uma camada opcional de autenticação e sincronização;
 - transformar os dados dos cursos em arquivos modulares;
