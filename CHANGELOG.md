@@ -1,5 +1,40 @@
 # Changelog
 
+## Thumbnails e capas audiovisuais v1.4.0 — 09/08/2026
+
+- Adicionadas thumbnails oficiais aos vídeos diretos das quatro trilhas.
+- Transformada toda a área da imagem em link para o endereço correto do vídeo.
+- Criadas capas próprias para **Playlist de videoaulas**, **Coleção temática** e **Buscar aulas sobre este assunto**.
+- Adicionados rótulo de abertura, botão de reprodução e animações de foco e passagem do mouse.
+- Implementado fallback visual quando uma thumbnail não puder ser carregada.
+- Mantidos vídeos sem iframe ou reprodução incorporada.
+- Limitado o carregamento externo de imagens a `https://i.ytimg.com` por CSP e aplicado `no-referrer` a cada thumbnail.
+- Atualizados testes de interface, segurança, privacidade e documentação de publicação.
+
+## Auditoria geral de videoaulas v1.3.1 — 09/08/2026
+
+- Revisados os 197 vídeos e coleções das trilhas DATAPREV, ASON, IBGE e CFAQ-MOC.
+- Substituídas sete referências diretas removidas, sem confirmação ou instáveis por aulas, playlist ou buscas temáticas válidas.
+- Corrigido o título de uma aula de criptografia cujo conteúdo não correspondia ao nome exibido.
+- Atualizados dois endereços de busca do canal English in Brazil para o identificador atual de Carina Fragozo.
+- Preservadas as contagens de 50 recursos DATAPREV, 50 ASON, 80 IBGE e 17 CFAQ-MOC.
+- Adicionada validação automática de URLs HTTPS, IDs do YouTube, referências das lições, contagens e bloqueio de oito referências aposentadas.
+- Aprovadas 1.538 verificações específicas dos catálogos audiovisuais.
+
+## Endurecimento de segurança e privacidade v1.3.0 — 08/08/2026
+
+- Removido da distribuição pública o arquivo-fonte bruto executável usado na importação CFAQ-MOC.
+- Separados JavaScript e CSS do `index.html` para aplicar CSP com `script-src 'self'`.
+- Eliminados iframes e miniaturas externas; nenhuma conexão de terceiros ocorre antes de clique.
+- Adicionadas validações de URL HTTPS e de caminhos de imagens locais.
+- Corrigido o tratamento de erro para não inserir mensagens não confiáveis como HTML.
+- Limitadas entradas e estruturas persistidas no navegador.
+- Restrita a exclusão às chaves `versa-`, preservando dados de outras aplicações na mesma origem.
+- Adicionados `noopener`, `noreferrer` e `no-referrer` aos links externos.
+- Criados política de privacidade, política de segurança, guia de GitHub Pages e relatório de auditoria.
+- Aprovadas 38 verificações específicas de segurança, com zero XSS executado e zero conexão automática a terceiros.
+- Auditoria de dependências concluída sem vulnerabilidades conhecidas.
+
 ## Flashcards estratégicos de alta incidência v1.2.0 — 08/08/2026
 
 - Adicionados 80 cartões estratégicos, sendo 20 em cada curso.

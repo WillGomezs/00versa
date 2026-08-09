@@ -8,7 +8,10 @@ TRILHAS INCLUÍDAS
 
 ARQUIVOS PRINCIPAIS
 1. index.html
-   Aplicação completa, interface, estilos, dados das trilhas DATAPREV, ASON e IBGE, integração CFAQ-MOC e lógica de funcionamento.
+   Estrutura segura de carregamento, metadados, CSP e política de referenciador.
+
+1A. app.js, styles.css e security-bootstrap.js
+    Interface, lógica, estilos e inicialização defensiva separados do HTML.
 
 2. cfaq-data.js
    Dados modulares da trilha CFAQ-MOC Nacional: módulos, microlições, questões, textos-base, vídeos e referências.
@@ -78,14 +81,17 @@ DOCUMENTAÇÃO E FERRAMENTAS CFAQ-MOC
 18B. RELATORIO_FLASHCARDS_ALTA_INCIDENCIA.md
      Metodologia, ranking, fontes e limites dos 80 cartões estratégicos.
 
+18C. RELATORIO_AUDITORIA_VIDEOAULAS_V1.3.1.md e AUDITORIA_VIDEOAULAS_V1.3.1.json
+     Revisão dos 197 recursos audiovisuais, substituições efetuadas e validação automática.
+
 19. documentos/cfaq-moc/LEIA-ME.txt
     Escopo, fontes oficiais e limite da atribuição institucional.
 
-20. fontes/Rota_Naval_original.html
-    Fonte recebida e preservada para rastreabilidade da importação.
+20. RELATORIO_AUDITORIA_SEGURANCA_V1.3.0.md, RELATORIO_AUDITORIA_SEGURANCA_V1.4.0.md, AUDITORIA_SEGURANCA_V1.4.0.json, PRIVACIDADE.md, SECURITY.md e GUIA_PUBLICACAO_SEGURA_GITHUB_PAGES.md
+    Auditorias, transparência ao usuário, política de vulnerabilidades e checklist de publicação.
 
 21. tools/ e package.json
-    Geradores, validações estruturais, teste de flashcards e teste de fluxo DOM. O npm é opcional e não é necessário para usar o site.
+    Geradores, validações estruturais, auditoria de videoaulas, teste de flashcards e teste de fluxo DOM. O npm é opcional e não é necessário para usar o site.
 
 ARQUIVOS GERAIS
 22. CHANGELOG.md
@@ -100,12 +106,37 @@ PUBLICAÇÃO NO GITHUB PAGES
 3. Abra Settings > Pages.
 4. Escolha Deploy from a branch, branch main e pasta /(root).
 5. Salve e aguarde a publicação.
+6. Marque Enforce HTTPS assim que a opção estiver disponível.
+
+Não publique arquivos-fonte brutos, backups privados, credenciais ou dados pessoais.
 
 O projeto é estático, não exige npm, compilação, banco de dados ou servidor próprio.
 O progresso é salvo no navegador e permanece separado por trilha.
 
 
-VERSÃO FLASHCARDS V1.1.0
+VERSÃO THUMBNAILS V1.4.0
+- Thumbnails oficiais nos vídeos diretos, com toda a imagem clicável.
+- Capas próprias para playlists, coleções temáticas e buscas de aulas.
+- Sem iframe ou reprodução de vídeo incorporada.
+- CSP permite imagens externas somente em i.ytimg.com.
+- no-referrer aplicado às thumbnails e aos links externos.
+
+
+VERSÃO VIDEOAULAS V1.3.1
+- 197 vídeos e coleções revisados nas quatro trilhas.
+- 7 referências diretas corrigidas e 2 buscas de canal atualizadas.
+- 1.538 verificações automáticas dos catálogos aprovadas.
+- Referências aposentadas conhecidas bloqueadas pelo teste de regressão.
+
+
+VERSÃO SEGURA V1.3.0
+- CSP e scripts externos locais.
+- Sem iframe, analytics ou conexão automática de terceiros na versão 1.3.0 original.
+- URLs, caminhos e dados locais validados e limitados.
+- 38 verificações de segurança aprovadas.
+
+
+VERSÃO FLASHCARDS V1.2.0
 - 421 cartões: 341 cartões-base e 80 cartões estratégicos de alta incidência.
 - 133 DATAPREV, 80 ASON, 98 IBGE e 30 CFAQ-MOC.
 - Repetição espaçada com Errei, Difícil, Bom e Fácil.

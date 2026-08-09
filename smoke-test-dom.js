@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
-const { JSDOM, VirtualConsole } = require('jsdom');
+const { JSDOM, VirtualConsole, requestInterceptor } = require('jsdom');
 
 const root = path.resolve(__dirname, '..');
 const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.svg':'image/svg+xml' };
@@ -20,11 +20,19 @@ const server = http.createServer((request, response) => {
 (async () => {
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const errors = [];
+  const external = [];
   const virtualConsole = new VirtualConsole();
   virtualConsole.on('jsdomError', (error) => errors.push(error.message));
   virtualConsole.on('error', (message) => errors.push(String(message)));
   const dom = await JSDOM.fromURL(`http://127.0.0.1:${server.address().port}/`, {
-    resources: 'usable',
+    resources: {
+      interceptors: [requestInterceptor((request) => {
+        if (!request.url.startsWith(`http://127.0.0.1:${server.address().port}`)) {
+          external.push(request.url);
+          return new Response('', { status: 204 });
+        }
+      })],
+    },
     runScripts: 'dangerously',
     pretendToBeVisual: true,
     virtualConsole,
@@ -64,18 +72,27 @@ const server = http.createServer((request, response) => {
   result.pathLessons = document.querySelectorAll('.lesson-card').length;
   document.querySelector('.lesson-card').click();
   result.lessonQuestions = document.querySelectorAll('.quiz-card').length;
+  const firstVideoThumbnail = document.querySelector('.video-thumbnail');
+  result.videoThumbnailSrc = firstVideoThumbnail?.getAttribute('src');
+  result.videoThumbnailLink = firstVideoThumbnail?.closest('a')?.getAttribute('href');
+  result.videoIframes = document.querySelectorAll('.video-card iframe').length;
   document.querySelector('[data-view="simulation"]').click();
   result.simChoices = document.querySelectorAll('[data-sim-start]').length;
   result.proofOptions = document.querySelectorAll('#cfaq-proof-select option').length;
   document.querySelector('[data-sim-start="completo"]').click();
   result.simQuestionLabel = document.querySelector('.sim-progress .badge')?.textContent;
   result.simOptions = document.querySelectorAll('[data-sim-opt]').length;
+  const coverLabels = new Set();
   for (const id of ['dataprev','ason','ibge','cfaq']) {
     document.querySelector(`[data-course="${id}"]`).click();
     result[`course_${id}`] = document.querySelector('.hero h1')?.textContent;
     document.querySelector('[data-view="flashcards"]').click();
     result[`flashcards_${id}`] = document.querySelector('.page-head .badge')?.textContent;
+    document.querySelector('[data-view="library"]').click();
+    document.querySelectorAll('.video-cover strong').forEach((element) => coverLabels.add(element.textContent));
   }
+  result.videoCoverLabels = [...coverLabels].sort();
+  result.externalThumbnailRequests = external.length;
   document.querySelector('[data-view="simulation"]').click();
   const proofSelect = document.querySelector('#cfaq-proof-select');
   proofSelect.value = proofSelect.options[1].value;
@@ -99,6 +116,11 @@ const server = http.createServer((request, response) => {
     result.flashMigratedXp === 6,
     result.pathLessons === 30,
     result.lessonQuestions >= 3,
+    /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/hqdefault\.jpg$/.test(result.videoThumbnailSrc || ''),
+    /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}$/.test(result.videoThumbnailLink || ''),
+    result.videoIframes === 0,
+    ['Buscar aulas sobre este assunto','Coleção temática','Playlist de videoaulas'].every((label) => result.videoCoverLabels.includes(label)),
+    external.every((url) => /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/hqdefault\.jpg$/.test(url)),
     result.simChoices === 4,
     result.proofOptions === 12,
     result.simQuestionLabel === 'Questão 1/40',
@@ -119,7 +141,7 @@ const server = http.createServer((request, response) => {
   server.close();
   const payload = { status: checks.every(Boolean) ? 'passed' : 'failed', result, errors };
   if (checks.every(Boolean)) {
-    const report = `# Teste de fluxo DOM — CFAQ-MOC Nacional e flashcards\n\nData: 08/08/2026\n\nStatus: **APROVADO**\n\n- Cartões de curso exibidos: ${result.courseCards}.\n- Curso aberto: ${result.dashboardTitle}.\n- Flashcards CFAQ-MOC: ${result.flashCardsCfaq}; sessão iniciada em ${result.flashSessionLabel}.\n- Resposta revelada: ${result.flashAnswerVisible}; classificações disponíveis: ${result.flashRatings}.\n- Migração e salvamento: ${result.flashSavedCards} cartão salvo; XP antigo preservado e atualizado para ${result.flashMigratedXp}.\n- Catálogos: DATAPREV ${result.flashcards_dataprev}, ASON ${result.flashcards_ason}, IBGE ${result.flashcards_ibge} e CFAQ-MOC ${result.flashcards_cfaq}.\n- Microlições CFAQ-MOC exibidas: ${result.pathLessons}.\n- Questões na primeira lição testada: ${result.lessonQuestions}.\n- Modos de simulado: ${result.simChoices}.\n- Opções do filtro histórico: ${result.proofOptions}.\n- Simulado completo iniciado: ${result.simQuestionLabel}.\n- Alternativas renderizadas na questão testada: ${result.simOptions}.\n- Alternância validada: ${result.course_dataprev}, ${result.course_ason}, ${result.course_ibge} e ${result.course_cfaq}.\n- Simulado histórico iniciado: ${result.proofSimLabel}.\n- Origem histórica exibida: ${result.proofSource}.\n- Erros de JavaScript capturados: ${errors.length}.\n\nO teste executou a aplicação em um DOM com carregamento HTTP local. Não substitui inspeção visual em navegador real.\n`;
+    const report = `# Teste de fluxo DOM — CFAQ-MOC Nacional, flashcards e mídia\n\nData: 09/08/2026\n\nStatus: **APROVADO**\n\n- Cartões de curso exibidos: ${result.courseCards}.\n- Curso aberto: ${result.dashboardTitle}.\n- Flashcards CFAQ-MOC: ${result.flashCardsCfaq}; sessão iniciada em ${result.flashSessionLabel}.\n- Resposta revelada: ${result.flashAnswerVisible}; classificações disponíveis: ${result.flashRatings}.\n- Migração e salvamento: ${result.flashSavedCards} cartão salvo; XP antigo preservado e atualizado para ${result.flashMigratedXp}.\n- Catálogos: DATAPREV ${result.flashcards_dataprev}, ASON ${result.flashcards_ason}, IBGE ${result.flashcards_ibge} e CFAQ-MOC ${result.flashcards_cfaq}.\n- Microlições CFAQ-MOC exibidas: ${result.pathLessons}.\n- Questões na primeira lição testada: ${result.lessonQuestions}.\n- Thumbnail vinculada ao vídeo correto: ${result.videoThumbnailLink}.\n- Capas especiais encontradas: ${result.videoCoverLabels.join(', ')}.\n- Iframes incorporados: ${result.videoIframes}.\n- Modos de simulado: ${result.simChoices}.\n- Opções do filtro histórico: ${result.proofOptions}.\n- Simulado completo iniciado: ${result.simQuestionLabel}.\n- Alternativas renderizadas na questão testada: ${result.simOptions}.\n- Alternância validada: ${result.course_dataprev}, ${result.course_ason}, ${result.course_ibge} e ${result.course_cfaq}.\n- Simulado histórico iniciado: ${result.proofSimLabel}.\n- Origem histórica exibida: ${result.proofSource}.\n- Erros de JavaScript capturados: ${errors.length}.\n\nO teste executou a aplicação em um DOM com carregamento HTTP local. As requisições externas de thumbnails foram interceptadas e validadas; o teste não substitui inspeção visual em navegador real.\n`;
     fs.writeFileSync(path.join(root, 'RELATORIO_TESTE_FLUXO_CFAQ_MOC.md'), report);
   }
   console.log(JSON.stringify(payload, null, 2));

@@ -21,13 +21,9 @@ for (const filename of ['cfaq-data.js', 'flashcards-priority-data.js', 'flashcar
   vm.runInNewContext(fs.readFileSync(path.join(root, filename), 'utf8'), sandbox, { filename });
 }
 
-const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-const marker = "<script>(()=>{'use strict';function buildDataprevCourse()";
-const start = html.indexOf(marker) + '<script>'.length;
-const end = html.lastIndexOf('</script>');
-let main = html.slice(start, end);
-main = main.replace(/render\(\);\s*\}\)\(\)\s*$/, 'window.__VERSA_COURSES=COURSES;})()');
-vm.runInNewContext(main, sandbox, { filename: 'index-inline.js', timeout: 15000 });
+let main = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+main = main.replace(/render\(\);\s*\}\)\(\);?\s*$/, 'window.__VERSA_COURSES=COURSES;})()');
+vm.runInNewContext(main, sandbox, { filename: 'app.js', timeout: 15000 });
 
 const courses = sandbox.window.__VERSA_COURSES;
 const report = {};

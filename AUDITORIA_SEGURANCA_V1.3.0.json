@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "checks": 38,
+  "failures": [],
+  "summary": {
+    "automaticThirdPartyRequests": 0,
+    "runtimeErrors": 0,
+    "xssPayloadsExecuted": 0
+  }
+}

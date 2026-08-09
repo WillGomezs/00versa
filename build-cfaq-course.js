@@ -6,7 +6,12 @@ const path = require('path');
 const crypto = require('crypto');
 
 const projectRoot = path.resolve(__dirname, '..');
-const sourcePath = path.resolve(process.argv[2] || path.join(projectRoot, 'fontes', 'Rota_Naval_original.html'));
+if (!process.argv[2]) {
+  console.error('Uso: node tools/build-cfaq-course.js /caminho/privado/Rota_Naval_original.html [pasta-de-saida]');
+  console.error('O arquivo-fonte privado não acompanha o pacote público por segurança e minimização de dados.');
+  process.exit(1);
+}
+const sourcePath = path.resolve(process.argv[2]);
 const outputRoot = path.resolve(process.argv[3] || projectRoot);
 const assetsDir = path.join(outputRoot, 'assets', 'cfaq');
 
@@ -163,7 +168,7 @@ for (const unit of units) {
 }
 
 const videoCatalog = [
-  ['cfaq-v-pt-interpretacao','Português','Compreensão e Interpretação de Texto','Aula do plano','https://www.youtube.com/watch?v=45thlAoGOGUT','Básico','Leitura estratégica para questões de compreensão e inferência.',['interpretação']],
+  ['cfaq-v-pt-interpretacao','Português','Compreensão e Interpretação de Texto','Professor Noslen','https://www.youtube.com/watch?v=XsN0e_xPyNI','Básico','Leitura estratégica para questões de compreensão e inferência.',['interpretação']],
   ['cfaq-v-pt-substantivo','Português','Substantivo e Adjetivo','Aula do plano','https://www.youtube.com/watch?v=6IjReY03lL8','Básico','Revisão das classes nominais mais recorrentes.',['morfologia']],
   ['cfaq-v-pt-verbos','Português','Verbos','Aula do plano','https://www.youtube.com/watch?v=T8MB4vzTAv4','Intermediário','Tempos, modos, flexões e vozes verbais.',['verbos']],
   ['cfaq-v-pt-pronomes','Português','Pronomes e Artigos','Aula do plano','https://www.youtube.com/watch?v=PQRdgiIutrE','Básico','Emprego contextual de pronomes e artigos.',['pronomes']],
@@ -350,7 +355,7 @@ const course = {
     'Questões anuladas, sem gabarito válido e duplicatas exatas não integram o banco ativo.',
   ],
   videoCatalog,
-  videoReviewDate: '07/08/2026',
+  videoReviewDate: '09/08/2026',
   filters: { proofs, years, originStatus: ['Origem institucional a confirmar'] },
   coverage: { label: 'Abrangência nacional em consolidação', updated: '07/08/2026', activeQuestions: questions.length, importedQuestions: imported.length },
 };

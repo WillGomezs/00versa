@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "checks": 42,
+  "failures": [],
+  "summary": {
+    "configuredExternalThumbnails": 17,
+    "observedThumbnailRequestsInJsdom": 0,
+    "otherAutomaticThirdPartyRequests": 0,
+    "runtimeErrors": 0,
+    "xssPayloadsExecuted": 0
+  }
+}

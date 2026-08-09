@@ -486,9 +486,15 @@ Cada recurso pode registrar:
 - justificativa da curadoria;
 - link direto para o YouTube.
 
-Alguns tópicos muito específicos não possuem uma aula individual gratuita, estável e em português que tenha sido validada. Nesses casos, a plataforma apresenta uma **coleção de busca direcionada**, identificada como tal. Na trilha IBGE, o catálogo atual contém 24 vídeos com reprodução direta, 12 canais ou coleções institucionais e 44 buscas temáticas direcionadas; estas últimas exigem seleção crítica do aluno e não são apresentadas como aulas individualmente validadas.
+Alguns tópicos muito específicos não possuem uma aula individual gratuita, estável e em português que tenha sido validada. Nesses casos, a plataforma apresenta uma **coleção de busca direcionada**, identificada como tal. Na trilha IBGE, o catálogo atual contém 22 vídeos com reprodução direta, 12 canais ou coleções institucionais e 46 buscas temáticas direcionadas; estas últimas exigem seleção crítica do aluno e não são apresentadas como aulas individualmente validadas.
+
+Em 09/08/2026, os 197 recursos audiovisuais das quatro trilhas foram revisados. Links retirados, vídeos sem confirmação e endereços de canal desatualizados foram substituídos. O comando `npm run validate:videos` confere a estrutura dos catálogos e impede a reintrodução das referências aposentadas conhecidas.
 
 A disponibilidade dos vídeos depende do YouTube e dos respectivos canais. Um vídeo pode ser removido, tornar-se privado ou mudar de endereço.
+
+A versão 1.4.0 exibe thumbnails oficiais dos vídeos diretos, carregadas de `i.ytimg.com`. A imagem inteira é um link para o vídeo correto. Playlists, coleções e buscas recebem capas próprias com identificação visual. O site continua sem incorporar ou reproduzir vídeos: somente a thumbnail é carregada antes do clique.
+
+O carregamento da thumbnail estabelece uma conexão com a infraestrutura do YouTube e pode expor ao serviço dados técnicos normais da conexão, como endereço IP e agente do navegador. A política `no-referrer` evita o envio do endereço da página do Versa, e a CSP limita imagens externas exclusivamente ao host autorizado.
 
 ---
 
@@ -524,7 +530,7 @@ Não são utilizados:
 - gerenciador de pacotes;
 - serviços pagos obrigatórios.
 
-A maior parte do CSS, do JavaScript e dos dados das trilhas está incorporada ao próprio `index.html`. Os dados CFAQ-MOC, o catálogo-base, os cartões estratégicos e o motor de repetição ficam em scripts clássicos separados. Essa escolha facilita a manutenção e preserva compatibilidade com abertura local e GitHub Pages.
+O documento `index.html` contém apenas a estrutura de carregamento. Interface e estilos ficam em `app.js` e `styles.css`; os dados CFAQ-MOC, o catálogo-base, os cartões estratégicos e o motor de repetição ficam em scripts clássicos separados. Essa separação permite uma política CSP mais rígida para scripts e preserva compatibilidade com abertura local e GitHub Pages.
 
 ---
 
@@ -532,7 +538,10 @@ A maior parte do CSS, do JavaScript e dos dados das trilhas está incorporada ao
 
 ```text
 versa-concursos-multitrilhas/
-├── index.html              # Aplicação, estilos, lógica e conteúdo das trilhas
+├── index.html              # Estrutura segura de carregamento e CSP
+├── app.js                  # Interface, lógica e conteúdo das trilhas-base
+├── styles.css              # Estilos locais
+├── security-bootstrap.js   # Tratamento defensivo de inicialização
 ├── cfaq-data.js            # Dados modulares CFAQ-MOC
 ├── flashcards-priority-data.js # 80 cartões e metodologia de alta incidência
 ├── flashcards-data.js      # Geração e integração do catálogo de 421 cartões
@@ -546,6 +555,14 @@ versa-concursos-multitrilhas/
 ├── RELATORIO_IMPLEMENTACAO_FLASHCARDS.md
 ├── RELATORIO_FLASHCARDS_ALTA_INCIDENCIA.md
 ├── RELATORIO_VALIDACAO_FLASHCARDS.md
+├── RELATORIO_AUDITORIA_VIDEOAULAS_V1.3.1.md
+├── AUDITORIA_VIDEOAULAS_V1.3.1.json
+├── RELATORIO_AUDITORIA_SEGURANCA_V1.3.0.md
+├── RELATORIO_AUDITORIA_SEGURANCA_V1.4.0.md
+├── AUDITORIA_SEGURANCA_V1.4.0.json
+├── PRIVACIDADE.md
+├── SECURITY.md
+├── GUIA_PUBLICACAO_SEGURA_GITHUB_PAGES.md
 ├── tools/                  # Geração e validações opcionais
 ├── documentos/ibge/ # Editais, anexos, prova e materiais de referência
 └── .nojekyll     # Impede processamento desnecessário pelo Jekyll
@@ -588,8 +605,11 @@ Essa opção reproduz de forma mais próxima o comportamento do GitHub Pages.
 5. Em **Build and deployment**, selecione **Deploy from a branch**.
 6. Escolha a branch `main` e a pasta `/(root)`.
 7. Salve e aguarde a publicação.
+8. Assim que disponível, marque **Enforce HTTPS**.
 
 Não é necessário executar `npm install`, compilar o projeto ou configurar variáveis de ambiente.
+
+Antes de publicar, siga o checklist em `GUIA_PUBLICACAO_SEGURA_GITHUB_PAGES.md`. Nunca envie o arquivo-fonte bruto usado na importação CFAQ-MOC, backups privados, credenciais ou dados pessoais.
 
 ---
 
@@ -606,7 +626,19 @@ Isso significa que:
 - limpar os dados do navegador pode apagar perfil, respostas e progresso;
 - o projeto não envia o histórico de estudos para um servidor próprio.
 
+Os dados locais não são criptografados. Use somente um apelido e não grave informações pessoais, senhas ou tokens nos campos do site. Links externos usam HTTPS, `noopener`, `noreferrer` e são abertos somente após clique.
+
 Quando o navegador bloqueia o `localStorage`, a aplicação tenta usar um armazenamento temporário em memória. Nesse modo, os dados são perdidos ao fechar ou recarregar a página.
+
+Consulte `PRIVACIDADE.md` para a descrição completa.
+
+---
+
+## Segurança da publicação
+
+A versão 1.3.0 adicionou CSP, política `no-referrer`, validação de URLs e imagens, limites de armazenamento e testes contra XSS. Na versão 1.4.0, a CSP foi ajustada para permitir somente thumbnails em `i.ytimg.com`; iframes, reprodução incorporada e outros hosts continuam bloqueados. Os relatórios técnicos estão em `RELATORIO_AUDITORIA_SEGURANCA_V1.3.0.md` e `RELATORIO_AUDITORIA_SEGURANCA_V1.4.0.md`.
+
+Esses controles foram orientados por ISO/IEC 27001, 27002, 27701 e 27017, LGPD, OWASP e NIST SSDF, mas **não constituem certificação ISO nem garantia de risco zero**. A conta GitHub, o HTTPS, o domínio e futuras alterações continuam sob responsabilidade de quem publica.
 
 ---
 
@@ -643,7 +675,7 @@ A plataforma não reproduz integralmente normas ISO, ABNT ou materiais protegido
 
 ### Links externos
 
-Vídeos e páginas externas podem ser removidos ou alterados pelos responsáveis. A data de revisão da curadoria disponível na versão atual é **06/08/2026**.
+Vídeos e páginas externas podem ser removidos ou alterados pelos responsáveis. A data de revisão da curadoria disponível na versão atual é **09/08/2026**. A validação estrutural reduz regressões, mas uma nova remoção feita pelo proprietário do vídeo ainda exige revisão periódica.
 
 ### Ausência de backend
 
@@ -683,7 +715,7 @@ Para manter o projeto confiável:
 - adicionar uma camada opcional de autenticação e sincronização;
 - transformar os dados dos cursos em arquivos modulares;
 - implementar um painel editorial real;
-- automatizar testes de regressão e validação dos links;
+- executar periodicamente a validação e a revisão editorial dos links externos;
 - acompanhar a publicação do edital ASON 2027;
 - atribuir cada conjunto histórico CFAQ-MOC à Capitania, Delegacia ou Agência somente após conferência documental;
 - ampliar progressivamente o catálogo CFAQ-MOC com editais, provas e gabaritos oficiais de outros Órgãos de Execução;
@@ -700,6 +732,7 @@ A versão foi estruturada para manter independência entre as quatro trilhas. As
 - quatro ou cinco alternativas válidas em cada questão CFAQ-MOC;
 - índices de gabarito válidos;
 - referências de vídeo cadastradas;
+- 197 vídeos e coleções auditados, com URL HTTPS, IDs coerentes e referências aposentadas bloqueadas;
 - armazenamento separado por curso;
 - carregamento sem dependências externas obrigatórias;
 - funcionamento do diagnóstico e dos simulados;

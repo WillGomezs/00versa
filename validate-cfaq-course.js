@@ -58,17 +58,14 @@ assert(course.filters.proofs.length === 11, 'Há 11 conjuntos históricos no fil
 assert(course.filters.years.join(',') === '2023,2024,2025,2026', 'Filtro de anos está correto');
 
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-assert(html.indexOf('<script src="cfaq-data.js"></script>') < html.indexOf("<script>(()=>{'use strict';function buildDataprevCourse()"), 'Dados CFAQ carregam antes da aplicação');
-assert(html.includes('COURSES.cfaq=window.CFAQ_DATA'), 'Curso CFAQ registrado no seletor');
-assert(html.includes("if(c.id==='cfaq')"), 'Simulador possui ramo CFAQ');
-assert(html.includes('cfaq-proof-select'), 'Filtro por prova histórica existe');
-assert(html.includes('questionExtras(c,q)'), 'Questões exibem textos-base e imagens');
-
-const mainScriptStart = html.indexOf("<script>(()=>{'use strict';function buildDataprevCourse()") + '<script>'.length;
-const mainScriptEnd = html.lastIndexOf('</script>');
-const mainScript = html.slice(mainScriptStart, mainScriptEnd);
+const mainScript = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+assert(/<script src="cfaq-data\.js(?:\?v=\d+)?"><\/script>/.test(html) && html.indexOf('cfaq-data.js') < html.indexOf('app.js'), 'Dados CFAQ carregam antes da aplicação');
+assert(mainScript.includes('COURSES.cfaq = window.CFAQ_DATA'), 'Curso CFAQ registrado no seletor');
+assert(/c\.id === "cfaq"/.test(mainScript), 'Simulador possui ramo CFAQ');
+assert(mainScript.includes('cfaq-proof-select'), 'Filtro por prova histórica existe');
+assert(mainScript.includes('questionExtras(c, q)'), 'Questões exibem textos-base e imagens');
 try {
-  new vm.Script(mainScript, { filename: 'index-inline.js' });
+  new vm.Script(mainScript, { filename: 'app.js' });
   assert(true, 'JavaScript principal possui sintaxe válida');
 } catch (error) {
   failures.push(`JavaScript principal inválido: ${error.message}`);
