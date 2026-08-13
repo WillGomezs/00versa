@@ -1,4 +1,4 @@
-/* Versa Concursos — catálogo de flashcards v1.2.0. */
+/* Versa Concursos — catálogo de flashcards v1.7.1. */
 (() => {
   'use strict';
 
@@ -61,7 +61,7 @@
   }
 
   window.VERSA_FLASHCARDS = Object.freeze({
-    version: '1.2.0',
+    version: '1.7.1',
     buildCourse
   });
 })();

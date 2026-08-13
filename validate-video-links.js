@@ -27,6 +27,7 @@ const sandbox = {
 for (const filename of [
   'cfaq-data.js',
   'dataprev-history-data.js',
+  'transpetro-cyber-data.js',
   'flashcards-priority-data.js',
   'flashcards-data.js',
   'flashcards-engine.js',
@@ -43,8 +44,8 @@ main = main.replace(
 vm.runInNewContext(main, sandbox, { filename: 'app.js', timeout: 15000 });
 
 const courses = sandbox.window.__VERSA_COURSES;
-const expectedCounts = { dataprev: 50, ason: 50, ibge: 80, cfaq: 17 };
-const reviewDate = '09/08/2026';
+const expectedCounts = { dataprev: 50, ason: 50, ibge: 80, cfaq: 17, 'transpetro-cyber': 40 };
+const reviewDates = { dataprev:'09/08/2026', ason:'09/08/2026', ibge:'09/08/2026', cfaq:'09/08/2026', 'transpetro-cyber':'13/08/2026' };
 const retiredReferences = [
   'qTW-CayLSSM',
   'cHcFDNkxpmQ',
@@ -65,7 +66,7 @@ for (const [courseId, expectedCount] of Object.entries(expectedCounts)) {
   const course = courses[courseId];
   assert(Boolean(course), `Curso ${courseId} existe`);
   assert(course.videoCatalog.length === expectedCount, `${courseId} preserva ${expectedCount} vídeos/coleções`);
-  assert(course.videoReviewDate === reviewDate, `${courseId} registra revisão em ${reviewDate}`);
+  assert(course.videoReviewDate === reviewDates[courseId], `${courseId} registra revisão em ${reviewDates[courseId]}`);
   assert(new Set(course.videoCatalog.map((video) => video.id)).size === expectedCount, `IDs de vídeos são únicos em ${courseId}`);
 
   const videoIds = new Set(course.videoCatalog.map((video) => video.id));
@@ -89,6 +90,12 @@ for (const [courseId, expectedCount] of Object.entries(expectedCounts)) {
       continue;
     }
 
+    if (courseId === 'transpetro-cyber') {
+      assert(video.type === 'video' && video.curated === true, `TRANSPETRO usa somente vídeo curado em ${video.id}`);
+      assert(Boolean(video.youtubeId), `TRANSPETRO possui youtubeId direto em ${video.id}`);
+      assert(!video.url.includes('/results?search_query='), `TRANSPETRO não usa busca temática em ${video.id}`);
+    }
+
     if (video.youtubeId) {
       directIds.add(video.youtubeId);
       assert(parsed.hostname === 'www.youtube.com', `Host do vídeo direto válido em ${courseId}/${video.id}`);
@@ -104,7 +111,7 @@ const serializedUrls = allUrls.join('\n');
 for (const retired of retiredReferences) {
   assert(!serializedUrls.includes(retired), `Referência aposentada removida: ${retired}`);
 }
-assert(total === 197, 'Catálogo total preserva 197 vídeos/coleções');
+assert(total === 237, 'Catálogo total possui 237 vídeos/coleções');
 assert(allUrls.includes('https://www.youtube.com/playlist?list=PLPmRk_xSwrYQk07Q2LVPglr8QPmV1Difz'), 'Playlist ISO substituta registrada');
 assert(directIds.has('IIU6i3UXyi0'), 'Aula substituta de coesão registrada');
 assert(directIds.has('su5NeDlSJjI'), 'Aula substituta de Present Continuous registrada');
@@ -113,7 +120,7 @@ assert(directIds.has('XsN0e_xPyNI'), 'Aula substituta de interpretação registr
 
 const report = {
   status: failures.length ? 'failed' : 'passed',
-  auditedAt: '2026-08-09',
+  auditedAt: '2026-08-13',
   checks,
   summary: {
     courses: Object.keys(expectedCounts).length,
@@ -126,7 +133,7 @@ const report = {
 };
 
 fs.writeFileSync(
-  path.join(root, 'AUDITORIA_VIDEOAULAS_V1.3.1.json'),
+  path.join(root, 'AUDITORIA_VIDEOAULAS_V1.7.1.json'),
   `${JSON.stringify(report, null, 2)}\n`,
 );
 

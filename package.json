@@ -1,8 +1,8 @@
 {
-  "name": "versa-concursos-cfaq-moc-nacional",
-  "version": "1.6.0",
+  "name": "versa-concursos-multitrilhas",
+  "version": "1.8.1",
   "private": true,
-  "description": "Versa Concursos endurecido para publicação estática, com trilhas e flashcards estratégicos.",
+  "description": "Versa Concursos com cinco trilhas, Mastery Engine e demonstrativos visuais interativos em todas as microlições DATAPREV.",
   "scripts": {
     "build:cfaq": "node tools/build-cfaq-course.js",
     "build:dataprev-history": "node tools/build-dataprev-history.js",
@@ -13,8 +13,14 @@
     "validate:adaptive": "node tools/validate-adaptive-engine.js",
     "audit:security": "node tools/security-audit.js",
     "test:dom": "node tools/smoke-test-dom.js",
-    "test": "npm run validate:cfaq && npm run validate:dataprev-history && npm run validate:flashcards && npm run validate:videos && npm run validate:adaptive && npm run test:dom && npm run audit:security",
-    "checksums": "node tools/update-checksums.js"
+    "test": "npm run validate:cfaq && npm run validate:dataprev-history && npm run validate:dataprev-visuals && npm run validate:transpetro-cyber && npm run validate:flashcards && npm run validate:videos && npm run validate:adaptive && npm run validate:mastery && npm run validate:render && npm run test:dom && npm run audit:security",
+    "checksums": "node tools/update-checksums.js",
+    "validate:transpetro-cyber": "node tools/validate-transpetro-cyber.js",
+    "audit:security:static": "node tools/security-audit-static.js",
+    "test:static": "npm run validate:cfaq && npm run validate:dataprev-history && npm run validate:dataprev-visuals && npm run validate:transpetro-cyber && npm run validate:flashcards && npm run validate:videos && npm run validate:adaptive && npm run validate:mastery && npm run validate:render && npm run audit:security:static",
+    "validate:mastery": "node tools/validate-mastery-ui.js",
+    "validate:render": "node tools/validate-render-templates.js",
+    "validate:dataprev-visuals": "node tools/validate-dataprev-visuals.js"
   },
   "devDependencies": {
     "jsdom": "26.1.0"

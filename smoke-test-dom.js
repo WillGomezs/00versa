@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
-const { JSDOM, VirtualConsole, requestInterceptor } = require('jsdom');
+const { JSDOM, VirtualConsole, ResourceLoader } = require('jsdom');
 
 const root = path.resolve(__dirname, '..');
 const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.svg':'image/svg+xml' };
@@ -24,15 +24,17 @@ const server = http.createServer((request, response) => {
   const virtualConsole = new VirtualConsole();
   virtualConsole.on('jsdomError', (error) => errors.push(error.message));
   virtualConsole.on('error', (message) => errors.push(String(message)));
-  const dom = await JSDOM.fromURL(`http://127.0.0.1:${server.address().port}/`, {
-    resources: {
-      interceptors: [requestInterceptor((request) => {
-        if (!request.url.startsWith(`http://127.0.0.1:${server.address().port}`)) {
-          external.push(request.url);
-          return new Response('', { status: 204 });
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  const dom = await JSDOM.fromURL(origin + '/', {
+    resources: new (class extends ResourceLoader {
+      fetch(url, options) {
+        if (!url.startsWith(origin)) {
+          external.push(url);
+          return Promise.resolve(Buffer.alloc(0));
         }
-      })],
-    },
+        return super.fetch(url, options);
+      }
+    })(),
     runScripts: 'dangerously',
     pretendToBeVisual: true,
     virtualConsole,
@@ -74,7 +76,14 @@ const server = http.createServer((request, response) => {
   document.querySelector('[data-view="path"]').click();
   result.pathLessons = document.querySelectorAll('.lesson-card').length;
   document.querySelector('.lesson-card').click();
+  result.pretestVisible = Boolean(document.querySelector('.pretest-card'));
+  if (document.querySelector('.pretest-card')) {
+    document.querySelector('[data-pretest-opt="0"]').click();
+    document.querySelector('[data-pretest-confidence="low"]').click();
+    document.querySelector('#pretest-submit').click();
+  }
   result.lessonQuestions = document.querySelectorAll('.quiz-card').length;
+  result.recallBox = Boolean(document.querySelector('#recall-draft'));
   const firstVideoThumbnail = document.querySelector('.video-thumbnail');
   result.videoThumbnailSrc = firstVideoThumbnail?.getAttribute('src');
   result.videoThumbnailLink = firstVideoThumbnail?.closest('a')?.getAttribute('href');
@@ -83,7 +92,9 @@ const server = http.createServer((request, response) => {
   const activeQuestion = dom.window.CFAQ_DATA.questions.find((question) => question.id === activeLesson.questionIds[0]);
   const wrongOption = (activeQuestion.correct + 1) % activeQuestion.options.length;
   document.querySelector(`[data-q="${activeQuestion.id}"][data-opt="${wrongOption}"]`).click();
+  document.querySelector(`[data-confidence-q="${activeQuestion.id}"][data-confidence="high"]`).click();
   document.querySelector(`[data-submit="${activeQuestion.id}"]`).click();
+  result.alternativeReview = Boolean(document.querySelector('.alternatives-review'));
   const adaptiveProgress = JSON.parse(dom.window.localStorage.getItem('versa-progress-cfaq'));
   result.adaptiveAttempts = adaptiveProgress.adaptive.attempts.length;
   result.activeErrors = adaptiveProgress.errors.filter((error) => error.status === 'active').length;
@@ -103,6 +114,19 @@ const server = http.createServer((request, response) => {
     document.querySelector('[data-view="library"]').click();
     document.querySelectorAll('.video-cover strong').forEach((element) => coverLabels.add(element.textContent));
   }
+  document.querySelector('[data-course="transpetro-cyber"]').click();
+  result.course_transpetro_cyber = document.querySelector('.hero h1')?.textContent;
+  document.querySelector('[data-view="flashcards"]').click();
+  result.flashcards_transpetro_cyber = document.querySelector('.page-head .badge')?.textContent;
+  document.querySelector('[data-view="path"]').click();
+  result.transpetroLessons = document.querySelectorAll('.lesson-card').length;
+  document.querySelector('[data-view="simulation"]').click();
+  result.transpetroSimChoices = document.querySelectorAll('[data-sim-start]').length;
+  document.querySelector('[data-sim-start="transpetro-proof:transpetro2023"]').click();
+  result.transpetroHistoricalLabel = document.querySelector('.sim-progress .badge')?.textContent;
+  result.transpetroHistoricalSource = document.querySelector('.question-source')?.textContent;
+  result.transpetroHistoricalOptions = document.querySelectorAll('[data-sim-opt]').length;
+  document.querySelector('[data-course="cfaq"]').click();
   result.videoCoverLabels = [...coverLabels].sort();
   result.externalThumbnailRequests = external.length;
   document.querySelector('[data-view="simulation"]').click();
@@ -137,7 +161,7 @@ const server = http.createServer((request, response) => {
   result.cebRecordedAttempts = dataprevProgress.adaptive.attempts.length;
   result.cebRecordedErrors = dataprevProgress.errors.length;
   const checks = [
-    result.courseCards === 4,
+    result.courseCards === 5,
     result.dashboardTitle === 'CFAQ-MOC Nacional',
     result.dailyPlanBlocks >= 2,
     Boolean(result.adaptivePriority),
@@ -154,16 +178,19 @@ const server = http.createServer((request, response) => {
     result.flashSavedCards === 1,
     result.flashMigratedXp === 6,
     result.pathLessons === 30,
+    result.pretestVisible === true,
     result.lessonQuestions >= 3,
+    result.recallBox === true,
     /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/hqdefault\.jpg$/.test(result.videoThumbnailSrc || ''),
     /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}$/.test(result.videoThumbnailLink || ''),
     result.videoIframes === 0,
     result.adaptiveAttempts >= 1,
     result.activeErrors >= 1,
     result.errorStatus === 'active',
+    result.alternativeReview === true,
     ['Buscar aulas sobre este assunto','Coleção temática','Playlist de videoaulas'].every((label) => result.videoCoverLabels.includes(label)),
     external.every((url) => /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/hqdefault\.jpg$/.test(url)),
-    result.simChoices === 4,
+    result.simChoices === 6,
     result.proofOptions === 12,
     result.simQuestionLabel === 'Questão 1/40',
     [4,5].includes(result.simOptions),
@@ -171,13 +198,20 @@ const server = http.createServer((request, response) => {
     result.course_ason === 'ASON 2027',
     result.course_ibge === 'IBGE 2026',
     result.course_cfaq === 'CFAQ-MOC Nacional',
+    result.course_transpetro_cyber === 'TRANSPETRO 2026.4 · Ênfase 7',
     result.flashcards_dataprev === '153 cartões',
     result.flashcards_ason === '100 cartões',
     result.flashcards_ibge === '118 cartões',
     result.flashcards_cfaq === '50 cartões',
+    result.flashcards_transpetro_cyber === '84 cartões',
+    result.transpetroLessons === 64,
+    result.transpetroSimChoices === 10,
+    result.transpetroHistoricalLabel === 'Questão 1/70',
+    /TRANSPETRO 2023\.2/.test(result.transpetroHistoricalSource || ''),
+    result.transpetroHistoricalOptions === 5,
     /^Questão 1\/\d+$/.test(result.proofSimLabel || ''),
     /Prova histórica: CFAQ/.test(result.proofSource || ''),
-    result.dataprevSimChoices === 7,
+    result.dataprevSimChoices === 9,
     result.fgvHistoricalLabel === 'Questão 1/69',
     /DATAPREV 2024 — FGV — Tipo 1/.test(result.fgvHistoricalSource || ''),
     result.fgvHistoricalOptions === 5,
@@ -193,7 +227,7 @@ const server = http.createServer((request, response) => {
   server.close();
   const payload = { status: checks.every(Boolean) ? 'passed' : 'failed', result, errors };
   if (checks.every(Boolean)) {
-    const report = `# Teste de fluxo DOM — CFAQ-MOC Nacional, flashcards e mídia\n\nData: 09/08/2026\n\nStatus: **APROVADO**\n\n- Cartões de curso exibidos: ${result.courseCards}.\n- Curso aberto: ${result.dashboardTitle}.\n- Flashcards CFAQ-MOC: ${result.flashCardsCfaq}; sessão iniciada em ${result.flashSessionLabel}.\n- Resposta revelada: ${result.flashAnswerVisible}; classificações disponíveis: ${result.flashRatings}.\n- Migração e salvamento: ${result.flashSavedCards} cartão salvo; XP antigo preservado e atualizado para ${result.flashMigratedXp}.\n- Catálogos: DATAPREV ${result.flashcards_dataprev}, ASON ${result.flashcards_ason}, IBGE ${result.flashcards_ibge} e CFAQ-MOC ${result.flashcards_cfaq}.\n- Microlições CFAQ-MOC exibidas: ${result.pathLessons}.\n- Questões na primeira lição testada: ${result.lessonQuestions}.\n- Thumbnail vinculada ao vídeo correto: ${result.videoThumbnailLink}.\n- Capas especiais encontradas: ${result.videoCoverLabels.join(', ')}.\n- Iframes incorporados: ${result.videoIframes}.\n- Modos de simulado: ${result.simChoices}.\n- Opções do filtro histórico: ${result.proofOptions}.\n- Simulado completo iniciado: ${result.simQuestionLabel}.\n- Alternativas renderizadas na questão testada: ${result.simOptions}.\n- Alternância validada: ${result.course_dataprev}, ${result.course_ason}, ${result.course_ibge} e ${result.course_cfaq}.\n- Simulado histórico iniciado: ${result.proofSimLabel}.\n- Origem histórica exibida: ${result.proofSource}.\n- Erros de JavaScript capturados: ${errors.length}.\n\nO teste executou a aplicação em um DOM com carregamento HTTP local. As requisições externas de thumbnails foram interceptadas e validadas; o teste não substitui inspeção visual em navegador real.\n`;
+    const report = `# Teste de fluxo DOM — Mastery Engine, CFAQ-MOC, flashcards e mídia\n\nData: 13/08/2026\n\nStatus: **APROVADO**\n\n- Cartões de curso exibidos: ${result.courseCards}.\n- Curso aberto: ${result.dashboardTitle}.\n- Flashcards CFAQ-MOC: ${result.flashCardsCfaq}; sessão iniciada em ${result.flashSessionLabel}.\n- Resposta revelada: ${result.flashAnswerVisible}; classificações disponíveis: ${result.flashRatings}.\n- Migração e salvamento: ${result.flashSavedCards} cartão salvo; XP antigo preservado e atualizado para ${result.flashMigratedXp}.\n- Catálogos: DATAPREV ${result.flashcards_dataprev}, ASON ${result.flashcards_ason}, IBGE ${result.flashcards_ibge}, CFAQ-MOC ${result.flashcards_cfaq} e TRANSPETRO Cyber ${result.flashcards_transpetro_cyber}.\n- Microlições CFAQ-MOC exibidas: ${result.pathLessons}.\n- Questões na primeira lição testada: ${result.lessonQuestions}.\n- Thumbnail vinculada ao vídeo correto: ${result.videoThumbnailLink}.\n- Capas especiais encontradas: ${result.videoCoverLabels.join(', ')}.\n- Iframes incorporados: ${result.videoIframes}.\n- Modos de simulado: ${result.simChoices}.\n- Opções do filtro histórico: ${result.proofOptions}.\n- Simulado completo iniciado: ${result.simQuestionLabel}.\n- Alternativas renderizadas na questão testada: ${result.simOptions}.\n- Alternância validada: ${result.course_dataprev}, ${result.course_ason}, ${result.course_ibge}, ${result.course_cfaq} e ${result.course_transpetro_cyber}.\n- Simulado histórico iniciado: ${result.proofSimLabel}.\n- Origem histórica exibida: ${result.proofSource}.\n- Erros de JavaScript capturados: ${errors.length}.\n\nO teste executou a aplicação em um DOM com carregamento HTTP local. As requisições externas de thumbnails foram interceptadas e validadas; o teste não substitui inspeção visual em navegador real.\n`;
     const adaptiveReport = report.replace(
       `- Flashcards CFAQ-MOC:`,
       `- Blocos do plano diário adaptativo: ${result.dailyPlanBlocks}; prioridade inicial: ${result.adaptivePriority}.\n- Indicador de domínio inicial: ${result.masteryMetric}.\n- Tentativas registradas no motor adaptativo: ${result.adaptiveAttempts}; erros ativos: ${result.activeErrors}.\n- Flashcards CFAQ-MOC:`,

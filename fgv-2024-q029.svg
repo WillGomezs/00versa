@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 300" role="img" aria-labelledby="title desc">
+  <title id="title">Exemplo com cinco vilarejos interligados</title>
+  <desc id="desc">Cinco vilarejos representados por casas, com uma estrada ligando cada par de vilarejos.</desc>
+  <g stroke="#355f5a" stroke-width="4" fill="none">
+    <path d="M260 35L70 120 115 260 405 260 450 120 260 35 115 260M260 35L405 260M70 120L450 120M70 120L405 260M450 120L115 260"/>
+  </g>
+  <g fill="#f2f7f5" stroke="#273733" stroke-width="4">
+    <path d="M230 45v-28h60v28l-30-20zM232 43h56v45h-56z"/>
+    <path d="M40 130v-28h60v28l-30-20zM42 128h56v45H42z"/>
+    <path d="M420 130v-28h60v28l-30-20zM422 128h56v45h-56z"/>
+    <path d="M85 270v-28h60v28l-30-20zM87 268h56v28H87z"/>
+    <path d="M375 270v-28h60v28l-30-20zM377 268h56v28h-56z"/>
+  </g>
+</svg>

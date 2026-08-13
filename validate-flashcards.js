@@ -24,7 +24,7 @@ const sandbox = {
   console,
 };
 
-for (const filename of ['cfaq-data.js', 'dataprev-history-data.js', 'flashcards-priority-data.js', 'flashcards-data.js', 'flashcards-engine.js', 'adaptive-engine.js']) {
+for (const filename of ['cfaq-data.js', 'dataprev-history-data.js', 'transpetro-cyber-data.js', 'flashcards-priority-data.js', 'flashcards-data.js', 'flashcards-engine.js', 'adaptive-engine.js']) {
   vm.runInNewContext(fs.readFileSync(path.join(root, filename), 'utf8'), sandbox, { filename });
 }
 
@@ -34,8 +34,8 @@ vm.runInNewContext(main, sandbox, { filename: 'app.js', timeout: 15000 });
 
 const courses = sandbox.window.__VERSA_COURSES;
 const engine = sandbox.window.VERSA_FLASHCARDS_ENGINE;
-const expected = { dataprev:153, ason:100, ibge:118, cfaq:50 };
-const baseExpected = { dataprev:133, ason:80, ibge:98, cfaq:30 };
+const expected = { dataprev:153, ason:100, ibge:118, cfaq:50, 'transpetro-cyber':84 };
+const baseExpected = { dataprev:133, ason:80, ibge:98, cfaq:30, 'transpetro-cyber':64 };
 assert(Boolean(courses), 'Cursos expostos para validação');
 assert(Boolean(engine), 'Motor de repetição carregado');
 
@@ -83,11 +83,17 @@ for (const [courseId, expectedCards] of Object.entries(expected)) {
     assert(countDiscipline('Português') === 10, 'CFAQ estratégico possui 10 cartões de Português');
     assert(countDiscipline('Matemática') === 10, 'CFAQ estratégico possui 10 cartões de Matemática');
   }
+  if (courseId === 'transpetro-cyber') {
+    assert(priority.length === 20, 'TRANSPETRO Cyber possui 20 cartões estratégicos');
+    assert(priority.some((card) => card.discipline === 'Segurança Ofensiva'), 'TRANSPETRO prioriza Segurança Ofensiva');
+    assert(priority.some((card) => card.discipline === 'Segurança Defensiva'), 'TRANSPETRO prioriza Segurança Defensiva');
+    assert(priority.some((card) => card.discipline === 'Compliance e Privacidade'), 'TRANSPETRO prioriza Compliance e Privacidade');
+  }
 }
 
-assert(allCards.length === 421, 'Catálogo total possui 421 flashcards');
+assert(allCards.length === 505, 'Catálogo total possui 505 flashcards');
 assert(new Set(allCards.map((card) => card.id)).size === allCards.length, 'IDs de flashcards são únicos');
-assert(Object.keys(sandbox.window.VERSA_PRIORITY_FLASHCARDS.basisByCourse).length === 4, 'Metodologia disponível nos quatro cursos');
+assert(Object.keys(sandbox.window.VERSA_PRIORITY_FLASHCARDS.basisByCourse).length === 5, 'Metodologia disponível nos cinco cursos');
 for (const [courseId, basis] of Object.entries(sandbox.window.VERSA_PRIORITY_FLASHCARDS.basisByCourse)) {
   assert(Boolean(basis.methodology), `Metodologia preenchida em ${courseId}`);
   assert(Array.isArray(basis.sources) && basis.sources.length > 0, `Fontes preenchidas em ${courseId}`);
@@ -120,5 +126,5 @@ if (failures.length) {
 console.log(JSON.stringify({
   status:'passed',
   checks,
-  summary:{ courses:4, flashcards:allCards.length, counts:expected, migration:'passed', scheduler:'passed' }
+  summary:{ courses:5, flashcards:allCards.length, counts:expected, migration:'passed', scheduler:'passed' }
 }, null, 2));

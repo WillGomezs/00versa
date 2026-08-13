@@ -2,14 +2,15 @@
 
 Plataforma gratuita de estudos por trilhas, inspirada em sistemas de aprendizagem progressiva, criada para organizar a preparação para concursos e processos seletivos em microlições, exercícios, revisões e simulados.
 
-A versão atual reúne quatro trilhas independentes:
+A versão atual reúne cinco trilhas independentes:
 
 - **DATAPREV 2026 — Analista de Tecnologia da Informação, Perfil 5: Segurança Cibernética e Proteção de Dados**;
 - **ASON 2027 — Curso de Adaptação a Segundo Oficial de Náutica da Marinha Mercante**, usando o edital e o Anexo II de 2026 como referência provisória até a publicação do processo seletivo oficial de 2027;
 - **IBGE 2026 — Analista Censitário, área de Ciências Sociais/Antropologia**, conforme o PSS nº 02/2026;
 - **CFAQ-MOC Nacional — Curso de Formação de Aquaviários — Moço de Convés**, com núcleo comum de Português e Matemática e banco histórico de processos locais.
+- **TRANSPETRO 2026.4 — Análise de Sistemas — Segurança Cibernética e da Informação (Ênfase 7)**, alinhada ao edital atual e reforçada pela prova oficial CESGRANRIO de 2023.2.
 
-> **Aviso:** este é um projeto educacional independente. Não possui vínculo oficial com a DATAPREV, a Fundação Getulio Vargas, a Marinha do Brasil, o CIAGA, a DPC, o IBGE, o Instituto Avalia, cursos preparatórios ou canais do YouTube indicados na plataforma.
+> **Aviso:** este é um projeto educacional independente. Não possui vínculo oficial com a DATAPREV, a Fundação Getulio Vargas, a Marinha do Brasil, o CIAGA, a DPC, o IBGE, o Instituto Avalia, a TRANSPETRO, a Fundação Cesgranrio, cursos preparatórios ou canais do YouTube indicados na plataforma.
 
 ---
 
@@ -19,17 +20,24 @@ O Versa Concursos transforma conteúdos extensos de editais em uma sequência de
 
 O aluno pode:
 
-- realizar um diagnóstico inicial;
+- realizar um diagnóstico inicial com registro de confiança;
 - seguir uma rota progressiva de estudos;
 - estudar por disciplina e módulo;
 - praticar flashcards com repetição espaçada;
 - assistir a videoaulas complementares;
-- responder questões de múltipla escolha;
+- responder questões de múltipla escolha com calibração de confiança;
+- fazer pré-testes rápidos antes da explicação;
+- usar recuperação aberta sem alternativas e autocorrigir pelos pontos-chave;
 - receber correção comentada;
 - revisar conteúdos em intervalos programados;
-- registrar erros automaticamente;
+- registrar erros automaticamente e classificar a causa provável;
+- identificar erros convictos, quando a resposta errada foi dada com alta confiança;
 - acompanhar desempenho por área;
 - realizar simulados parciais e completos;
+- praticar questões intercaladas e questões novas de transferência;
+- iniciar sessões guiadas de 20, 30, 45 ou 60 minutos;
+- acompanhar ritmo médio e projeção de tempo de prova pelo Versa Pace;
+- explorar demonstrativos visuais guiados nas 77 microlições DATAPREV;
 - manter progresso separado em cada trilha.
 
 Todo o projeto funciona como um site estático e pode ser publicado gratuitamente no **GitHub Pages**.
@@ -44,9 +52,10 @@ Todo o projeto funciona como um site estático e pode ser publicado gratuitament
 | ASON | 20 | 80 | 100 | 160 | 50 | 28 questões |
 | IBGE | 19 | 98 | 118 | 327 | 80 | 39 questões |
 | CFAQ-MOC | 10 | 30 | 50 | 406 | 17 | 30 questões |
-| **Total** | **72** | **341** | **421** | **1.335** | **197** | — |
+| TRANSPETRO Cyber | 15 | 64 | 84 | 198 | 40 | 30 questões |
+| **Total** | **87** | **405** | **505** | **1.533** | **237** | — |
 
-Os números representam o conteúdo disponível na versão multitrilhas com a inclusão do IBGE. O banco poderá crescer com novas questões, provas anteriores comentadas, revisões editoriais e atualizações de legislação e atualidades.
+Os números representam o conteúdo disponível na versão v1.8.0 com cinco trilhas ativas e Mastery Engine local. O banco poderá crescer com novas questões, provas anteriores comentadas, revisões editoriais e atualizações de legislação e atualidades.
 
 ---
 
@@ -55,21 +64,23 @@ Os números representam o conteúdo disponível na versão multitrilhas com a in
 A estrutura pedagógica de cada lição segue, em geral, este fluxo:
 
 ```text
+Pré-teste rápido (primeiro contato)
+        ↓
 Objetivo da microlição
         ↓
-Explicação resumida
+Explicação resumida + pontos essenciais
         ↓
-Pontos essenciais
+Exemplo aplicado + videoaula complementar
         ↓
-Exemplo aplicado
+Recuperação aberta sem alternativas
         ↓
-Videoaula complementar
+Questões + nível de confiança
         ↓
-Recuperação ativa
+Correção alternativa por alternativa
         ↓
-Questões comentadas
+Classificação do erro, quando necessário
         ↓
-Revisão programada
+Revisão espaçada + transferência/interleaving
 ```
 
 ### Microlições
@@ -93,23 +104,32 @@ As questões apresentam duas, quatro ou cinco alternativas, conforme a estrutura
 
 As questões autorais foram criadas para fixação e aproximação ao estilo dos processos seletivos. Elas não devem ser tratadas como questões oficiais das bancas.
 
+Na prática das microlições, o aluno informa seu nível de confiança **antes** de corrigir. Após a resposta, pode abrir a análise de todas as alternativas. Respostas erradas com alta confiança recebem o marcador **erro convicto** e entram no topo da fila adaptativa. O aluno também pode indicar a causa provável do erro; essa classificação é local e serve apenas para orientar a própria revisão.
+
 No DATAPREV, há também **184 questões históricas oficiais válidas**: 69 da FGV/2024 e 115 itens Certo ou Errado do Cebraspe/2023. Questões anuladas foram omitidas e os gabaritos ativos são os definitivos.
 
 ### Revisão espaçada
 
 A plataforma mantém uma fila de conteúdos para revisão. A partir da versão 1.5.0, o intervalo das lições varia conforme o resultado e o histórico: baixo desempenho retorna mais cedo; resultados confirmados ampliam progressivamente o intervalo.
 
-### Plano inteligente e mapa de domínio
+### Mastery Engine v2.0 e mapa de domínio
 
-O plano diário combina quatro sinais mantidos apenas no navegador: revisões vencidas, erros ativos, domínio estimado e próxima etapa elegível da trilha. A meta de 20 a 90 minutos é dividida entre revisão, ponto fraco, conteúdo novo e flashcards.
+A v1.8.0 mantém o progresso legado e adiciona sinais metacognitivos e temporais. O motor não trata “concluir” como sinônimo de “aprender”: ele combina precisão, desempenho da lição, flashcards, retenção em dias diferentes, confiança declarada, ritmo de resposta e erros ativos. O tempo de resposta tem peso pequeno para não transformar velocidade em pressa.
 
-Cada microlição pode aparecer como **Não estudada**, **Em aprendizagem**, **Em consolidação** ou **Dominada**. Domínio não depende de uma única nota: exige bom desempenho e confirmação em momentos diferentes. O cálculo considera questões, resultado da lição, flashcards, erros ativos e prática espaçada.
+Cada microlição aparece em um de quatro estados pedagógicos:
 
-O diagnóstico deixou de salvar apenas uma porcentagem geral. Ele agora registra o resultado por disciplina, módulo e microlição, alimentando o plano diário e o caderno de erros.
+- **Desconhecido** — ainda não há evidência suficiente;
+- **Familiar** — o conteúdo já foi visto, mas a recuperação ainda é frágil;
+- **Recuperável** — o aluno consegue recuperar e aplicar, mas ainda precisa de estabilidade temporal;
+- **Consolidado** — há bom desempenho confirmado em momentos diferentes, sem erro ativo relevante.
+
+O plano diário pode priorizar **erro convicto**, revisão em risco de esquecimento, ponto fraco, conteúdo novo, prática intercalada e flashcards. O botão **Estudar agora** monta uma sessão guiada de 20, 30, 45 ou 60 minutos sem bloquear a navegação livre.
+
+O diagnóstico registra acerto, confiança e tempo de resposta. O caderno de erros 2.0 separa erro convicto, desconhecimento de conteúdo, confusão conceitual, interpretação, desatenção, chute e erro de procedimento. O painel de desempenho compara pré-teste e pós-estudo quando existem dados comparáveis e mostra o **Versa Pace**.
 
 ### Flashcards adaptativos
 
-Cada microlição possui um flashcard-base, totalizando 341 cartões-base. A versão 1.2.0 acrescenta 80 cartões estratégicos de alta incidência — 20 por curso — e eleva o catálogo a 421 cartões. A frente usa recuperação ativa; a resposta reúne a síntese, os pontos essenciais e, nos cartões estratégicos, a razão objetiva da prioridade.
+Cada microlição possui um flashcard-base. Com as cinco trilhas, são **405 cartões-base** e **100 cartões estratégicos de alta incidência** — 20 por curso —, totalizando **505 flashcards**. A frente usa recuperação ativa; a resposta reúne a síntese, os pontos essenciais e, nos cartões estratégicos, a razão objetiva da prioridade.
 
 O aluno pode:
 
@@ -482,9 +502,33 @@ O cronômetro dos modos CFAQ-MOC é uma referência de treino. O edital local pr
 
 Os dados CFAQ-MOC ficam em `cfaq-data.js`, carregados por script clássico antes da aplicação principal. Imagens ficam em `assets/cfaq/`. Essa separação preserva abertura local por `file://`, não utiliza `fetch()` e evita incorporar vários megabytes de imagens ao `index.html`.
 
-O progresso usa a chave `versa-progress-cfaq`, isolada das outras três trilhas.
+O progresso usa a chave `versa-progress-cfaq`, isolada das outras quatro trilhas.
 
 ---
+
+## TRANSPETRO 2026.4 — Segurança Cibernética e da Informação
+
+A quinta trilha foi estruturada para a **Ênfase 7 — Análise de Sistemas — Segurança Cibernética e da Informação**. O modo de prova representa 70 questões em 4h30: 50 de Conhecimentos Específicos, 10 de Língua Portuguesa e 10 de Língua Inglesa.
+
+### Cobertura curricular
+
+- **Segurança Ofensiva:** ameaças, vulnerabilidades, etapas de ataque, protocolos, Wi-Fi, MITM, engenharia social, malware, MITRE ATT&CK/CAPEC e ferramentas de hacking previstas no edital;
+- **Segurança Defensiva:** defesa em profundidade, 802.1X/EAP/RADIUS, OWASP, CVE/CWE, mecanismos criptográficos, ICP-Brasil, TLS/IPsec, endpoint, hardening, OT/ICS, NIST SP 800-82, ISA/IEC 62443, forense e OSINT;
+- **Compliance e Privacidade:** ISO/IEC 27001, 27002, 27005, 27035, ISO 22301/22313, ISO/IEC 29100, 29134, 27701, NIST CSF 2.0, CIS Controls 8.1, Marco Civil, LGPD e Resolução Anatel nº 740/2020.
+
+### Reforço editorial v1.7.1
+
+- 15 módulos e 64 microlições;
+- **128 questões autorais**, garantindo no mínimo 2 autorais por microlição;
+- **70 questões históricas oficiais** da Prova 5 da TRANSPETRO 2023.2, preservadas com o gabarito fornecido;
+- **198 questões no total**;
+- feedback específico para cada uma das cinco alternativas de todas as 198 questões;
+- 30 itens de diagnóstico;
+- 84 flashcards;
+- **40 videoaulas diretas curadas**, distribuídas entre as 64 microlições;
+- simulado histórico de 2023.2 e modelo de prova 2026.4.
+
+A divisão pedagógica interna de 20 questões de Segurança Ofensiva, 20 de Segurança Defensiva e 10 de Compliance/Privacidade serve apenas para treino. Ela não é apresentada como distribuição oficial da banca.
 
 ## Videoaulas
 
@@ -502,7 +546,7 @@ Cada recurso pode registrar:
 
 Alguns tópicos muito específicos não possuem uma aula individual gratuita, estável e em português que tenha sido validada. Nesses casos, a plataforma apresenta uma **coleção de busca direcionada**, identificada como tal. Na trilha IBGE, o catálogo atual contém 22 vídeos com reprodução direta, 12 canais ou coleções institucionais e 46 buscas temáticas direcionadas; estas últimas exigem seleção crítica do aluno e não são apresentadas como aulas individualmente validadas.
 
-Em 09/08/2026, os 197 recursos audiovisuais das quatro trilhas foram revisados. Links retirados, vídeos sem confirmação e endereços de canal desatualizados foram substituídos. O comando `npm run validate:videos` confere a estrutura dos catálogos e impede a reintrodução das referências aposentadas conhecidas.
+Em 09/08/2026, os 197 recursos audiovisuais das quatro trilhas anteriores foram revisados. Em 13/08/2026, a trilha TRANSPETRO Cyber recebeu uma curadoria própria com **40 links diretos para videoaulas**, sem usar páginas de busca do YouTube como se fossem aulas. O catálogo global passou a 237 recursos. O comando `npm run validate:videos` confere a estrutura dos catálogos, IDs dos vídeos e referências das microlições.
 
 A disponibilidade dos vídeos depende do YouTube e dos respectivos canais. Um vídeo pode ser removido, tornar-se privado ou mudar de endereço.
 
@@ -544,7 +588,7 @@ Não são utilizados:
 - gerenciador de pacotes;
 - serviços pagos obrigatórios.
 
-O documento `index.html` contém apenas a estrutura de carregamento. Interface e estilos ficam em `app.js` e `styles.css`; os dados CFAQ-MOC, o catálogo-base, os cartões estratégicos e o motor de repetição ficam em scripts clássicos separados. Essa separação permite uma política CSP mais rígida para scripts e preserva compatibilidade com abertura local e GitHub Pages.
+O documento `index.html` contém apenas a estrutura de carregamento. Interface e estilos ficam em `app.js` e `styles.css`; os dados CFAQ-MOC, o histórico DATAPREV, a trilha TRANSPETRO Cyber, o catálogo-base, os cartões estratégicos e o motor de repetição ficam em scripts clássicos separados. Essa separação permite uma política CSP mais rígida para scripts e preserva compatibilidade com abertura local e GitHub Pages.
 
 ---
 
@@ -558,10 +602,11 @@ versa-concursos-multitrilhas/
 ├── security-bootstrap.js   # Tratamento defensivo de inicialização
 ├── cfaq-data.js            # Dados modulares CFAQ-MOC
 ├── dataprev-history-data.js # 184 questões oficiais FGV e Cebraspe
-├── flashcards-priority-data.js # 80 cartões e metodologia de alta incidência
-├── flashcards-data.js      # Geração e integração do catálogo de 421 cartões
+├── transpetro-cyber-data.js # Trilha TRANSPETRO Cyber v1.8.0
+├── flashcards-priority-data.js # 100 cartões e metodologia de alta incidência
+├── flashcards-data.js      # Geração e integração do catálogo de 505 cartões
 ├── flashcards-engine.js    # Agendamento e repetição espaçada
-├── adaptive-engine.js      # Domínio, plano diário e revisão de lições
+├── adaptive-engine.js      # Mastery Engine v2.0: domínio, retenção e plano diário
 ├── logo.svg                # Identidade visual usada pelo site
 ├── README.md               # Documentação do projeto
 ├── MATRIZ_CURRICULAR_IBGE.md
@@ -577,10 +622,18 @@ versa-concursos-multitrilhas/
 ├── RELATORIO_AUDITORIA_SEGURANCA_V1.4.0.md
 ├── RELATORIO_AUDITORIA_SEGURANCA_V1.5.0.md
 ├── AUDITORIA_SEGURANCA_V1.5.0.json
-├── RELATORIO_AUDITORIA_SEGURANCA_V1.6.0.md
-├── AUDITORIA_SEGURANCA_V1.6.0.json
+├── RELATORIO_AUDITORIA_SEGURANCA_V1.6.0.md # histórico
+├── RELATORIO_AUDITORIA_SEGURANCA_V1.8.0.md # auditoria atual
+├── AUDITORIA_SEGURANCA_ESTATICA_V1.8.0.json
+├── RELATORIO_IMPLEMENTACAO_MASTERY_ENGINE_V1.8.0.md
+├── RELATORIO_VALIDACAO_MASTERY_ENGINE_V1.8.0.md
 ├── RELATORIO_IMPLEMENTACAO_ADAPTATIVA_V1.5.0.md
 ├── RELATORIO_INCORPORACAO_DATAPREV_HISTORICO_V1.6.0.md
+├── MAPEAMENTO_EDITAL_TRANSPETRO_CYBER.md
+├── CURADORIA_VIDEOAULAS_TRANSPETRO_CYBER_V1.7.1.md
+├── RELATORIO_VALIDACAO_TRANSPETRO_CYBER_V1.7.1.md
+├── RELATORIO_FECHAMENTO_TRANSPETRO_CYBER_V1.7.1.md
+├── RELATORIO_AUDITORIA_VIDEOAULAS_V1.7.1.md
 ├── PENDENCIAS_EDITORIAIS_FUTURAS.md
 ├── PRIVACIDADE.md
 ├── SECURITY.md
@@ -588,6 +641,7 @@ versa-concursos-multitrilhas/
 ├── tools/                  # Geração e validações opcionais
 ├── documentos/dataprev/ # Provas e rastreabilidade dos gabaritos
 ├── documentos/ibge/ # Editais, anexos, prova e materiais de referência
+├── documentos/transpetro/ # Edital 2026.4, prova 2023.2, gabarito e rastreabilidade
 └── .nojekyll     # Impede processamento desnecessário pelo Jekyll
 ```
 
@@ -616,6 +670,21 @@ http://localhost:8000
 ```
 
 Essa opção reproduz de forma mais próxima o comportamento do GitHub Pages.
+
+### Validação de desenvolvimento
+
+A aplicação não precisa de npm para uso normal. Para manutenção editorial, a suíte estrutural pode ser executada sem dependências externas:
+
+```bash
+npm run test:static
+```
+
+Para os testes dinâmicos em DOM e a auditoria dinâmica de segurança, instale a dependência de desenvolvimento e execute a suíte completa:
+
+```bash
+npm ci
+npm test
+```
 
 ---
 
@@ -659,7 +728,7 @@ Consulte `PRIVACIDADE.md` para a descrição completa.
 
 ## Segurança da publicação
 
-A versão 1.3.0 adicionou CSP, política `no-referrer`, validação de URLs e imagens, limites de armazenamento e testes contra XSS. Na versão 1.4.0, a CSP foi ajustada para permitir somente thumbnails em `i.ytimg.com`; iframes, reprodução incorporada e outros hosts continuam bloqueados. A versão 1.5.0 normalizou o histórico adaptativo. A versão 1.6.0 incorporou o banco histórico DATAPREV como arquivo estático local, sem API, conta ou nova coleta de dados. O relatório técnico mais recente é `RELATORIO_AUDITORIA_SEGURANCA_V1.6.0.md`.
+A versão 1.3.0 adicionou CSP, política `no-referrer`, validação de URLs e imagens, limites de armazenamento e testes contra XSS. Na versão 1.4.0, a CSP foi ajustada para permitir somente thumbnails em `i.ytimg.com`; iframes, reprodução incorporada e outros hosts continuam bloqueados. A versão 1.5.0 normalizou o histórico adaptativo. A versão 1.6.0 incorporou o banco histórico DATAPREV como arquivo estático local. A v1.8.0 mantém essa arquitetura estática e adiciona o Mastery Engine sem backend, com novos dados pedagógicos limitados ao `localStorage`. O relatório técnico mais recente é `RELATORIO_AUDITORIA_SEGURANCA_V1.8.1.md`.
 
 Esses controles foram orientados por ISO/IEC 27001, 27002, 27701 e 27017, LGPD, OWASP e NIST SSDF, mas **não constituem certificação ISO nem garantia de risco zero**. A conta GitHub, o HTTPS, o domínio e futuras alterações continuam sob responsabilidade de quem publica.
 
@@ -748,14 +817,14 @@ Para manter o projeto confiável:
 
 ## Validação da versão multitrilhas com CFAQ-MOC
 
-A versão foi estruturada para manter independência entre as quatro trilhas. As validações realizadas no projeto incluem:
+A versão foi estruturada para manter independência entre as cinco trilhas. As validações realizadas no projeto incluem:
 
 - existência das lições referenciadas pelas questões;
 - existência das questões referenciadas pelas lições;
 - quatro ou cinco alternativas válidas em cada questão CFAQ-MOC;
 - índices de gabarito válidos;
 - referências de vídeo cadastradas;
-- 197 vídeos e coleções auditados, com URL HTTPS, IDs coerentes e referências aposentadas bloqueadas;
+- 237 vídeos e coleções auditados, com URL HTTPS, IDs coerentes e referências aposentadas bloqueadas;
 - armazenamento separado por curso;
 - carregamento sem dependências externas obrigatórias;
 - funcionamento do diagnóstico e dos simulados;
@@ -771,8 +840,12 @@ A versão foi estruturada para manter independência entre as quatro trilhas. As
 - 21 imagens e 17 textos-base referenciados por arquivos e IDs válidos;
 - filtros para 11 conjuntos históricos, de 2023 a 2026;
 - ausência de questões ASON ou CFAQ-MOM no banco ativo CFAQ-MOC;
+- 198 questões na trilha TRANSPETRO Cyber, com 128 autorais e 70 históricas oficiais;
+- no mínimo duas questões autorais em cada uma das 64 microlições TRANSPETRO;
+- 990 comentários por alternativa na trilha TRANSPETRO, sem feedback genérico legado;
+- 40 videoaulas diretas curadas na trilha TRANSPETRO, sem páginas de busca usadas como aula;
 - 2.083 verificações estruturais automatizadas aprovadas;
-- teste de fluxo em DOM com quatro cursos, trilha, lição e simulado CFAQ-MOC de 40 questões aprovado sem erros de JavaScript.
+- teste de fluxo DOM preparado para cinco cursos; a execução completa requer a dependência de desenvolvimento `jsdom`. A suíte estrutural `npm run test:static` cobre os validadores de conteúdo, vídeos, flashcards, motor adaptativo e segurança estática.
 
 ---
 
@@ -787,3 +860,8 @@ O conteúdo pode conter simplificações, erros ou desatualizações. Antes de t
 ## Licença
 
 Nenhuma licença de software foi definida nesta versão. A ausência de um arquivo de licença não significa autorização automática para redistribuição, modificação ou uso comercial. Defina uma licença adequada antes de abrir o projeto para contribuições públicas ou reutilização por terceiros.
+
+
+## Demonstrativos visuais DATAPREV — v1.8.1
+
+As 77 microlições da trilha DATAPREV possuem agora um demonstrativo visual próprio em HTML/CSS, inspirado no fluxo pedagógico conceito → representação visual → pontos essenciais → recuperação ativa. Os visuais são locais, responsivos, acessíveis por teclado nos passos guiados e não dependem de imagens externas.

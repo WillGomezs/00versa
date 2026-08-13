@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 330" role="img" aria-labelledby="title desc">
+  <title id="title">Diagrama BPMN da questão 120</title>
+  <desc id="desc">A tarefa Identificar documentação necessária leva a um gateway exclusivo, com três condições e três tarefas alternativas. Os caminhos são reunidos antes de Analisar validade dos documentos.</desc>
+  <g fill="none" stroke="#273733" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M40 165h70M270 165h55M375 165V60h105M375 165h105M375 165v105h105M650 60h70v105M650 165h70M650 270h70V165M770 165h50"/>
+    <rect x="110" y="115" width="160" height="100" rx="12"/>
+    <rect x="480" y="20" width="170" height="80" rx="12"/>
+    <rect x="480" y="125" width="170" height="80" rx="12"/>
+    <rect x="480" y="230" width="170" height="80" rx="12"/>
+    <rect x="820" y="115" width="150" height="100" rx="12"/>
+    <path d="M350 140l25 25-25 25-25-25zM745 140l25 25-25 25-25-25z" fill="#fff"/>
+    <circle cx="350" cy="165" r="10"/><circle cx="745" cy="165" r="10"/>
+    <path d="M98 155l12 10-12 10M468 50l12 10-12 10M468 155l12 10-12 10M468 260l12 10-12 10M808 155l12 10-12 10" fill="#273733"/>
+  </g>
+  <g fill="#273733" font-family="Arial, sans-serif" font-size="18" text-anchor="middle">
+    <text x="190" y="153">Identificar documentação</text><text x="190" y="180">necessária</text>
+    <text x="350" y="122">#Decisão</text>
+    <text x="420" y="52">Negativa civil</text><text x="420" y="157">Negativa criminal</text><text x="420" y="262">Certidão negativa</text>
+    <text x="565" y="55">Anexar #1</text><text x="565" y="82">negativa civil</text>
+    <text x="565" y="160">Anexar #2</text><text x="565" y="187">negativa criminal</text>
+    <text x="565" y="265">Anexar #3</text><text x="565" y="292">negativa de débitos</text>
+    <text x="895" y="153">Analisar validade dos</text><text x="895" y="180">documentos</text>
+  </g>
+</svg>

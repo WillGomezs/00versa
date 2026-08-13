@@ -1,193 +1,94 @@
-VERSA CONCURSOS — PACOTE MULTITRILHAS COMPLETO
+VERSA CONCURSOS — PACOTE MULTITRILHAS COMPLETO — v1.8.1
+MASTERY ENGINE + VISUAL LEARNING DATAPREV
 
 TRILHAS INCLUÍDAS
 - DATAPREV 2026 — Segurança Cibernética e Proteção de Dados.
 - ASON 2027 — baseada no programa de 2026 até a publicação do edital oficial de 2027.
 - IBGE 2026 — Analista Censitário — Ciências Sociais/Antropologia.
 - CFAQ-MOC Nacional — Moço de Convés — todas as Capitanias.
+- TRANSPETRO 2026.4 · Ênfase 7 — Análise de Sistemas — Segurança Cibernética e da Informação.
+
+RESUMO DO CONTEÚDO
+- 5 trilhas.
+- 87 módulos.
+- 405 microlições.
+- 505 flashcards.
+- 1.533 questões.
+- 237 recursos de estudo/videoaulas.
+- DATAPREV: 77/77 microlições com demonstrativo visual e 231 passos guiados.
+
+NOVIDADES PEDAGÓGICAS
+v1.8.0 — MASTERY ENGINE
+- Estados Desconhecido, Familiar, Recuperável e Consolidado.
+- Pré-teste por microlição sem penalização.
+- Recuperação aberta, confiança, erro convicto e Caderno de Erros 2.0.
+- Revisão inteligente, interleaving, transferência, Versa Pace e sessões guiadas.
+
+v1.8.1 — VISUAL LEARNING DATAPREV
+- Um demonstrativo visual específico em cada uma das 77 microlições DATAPREV.
+- 17 padrões de representação: fluxos, comparações, pilhas, grids, linhas do tempo, ciclos, endereçamento, topologias, hub, switch, AP, pacote/quadro, mapeamento OSI↔TCP/IP, rede/host, tabela de roteamento, barras de domínio e tríade CIA.
+- 231 passos clicáveis de exploração guiada.
+- Elementos em HTML/CSS e dados locais; nenhuma nova dependência externa ou coleta de dados.
+- Layout responsivo, suporte a teclado e respeito a prefers-reduced-motion.
 
 ARQUIVOS PRINCIPAIS
 1. index.html
-   Estrutura segura de carregamento, metadados, CSP e política de referenciador.
+   Entrada do site, CSP e ordem de carregamento dos módulos.
+2. app.js
+   Interface, navegação, fluxos pedagógicos e renderer dos demonstrativos DATAPREV.
+3. styles.css
+   Tema, responsividade e componentes visuais.
+4. dataprev-visuals.js
+   Catálogo dos 77 demonstrativos DATAPREV.
+5. adaptive-engine.js
+   Mastery Engine v2.0.0.
+6. dataprev-history-data.js
+   Banco histórico DATAPREV.
+7. transpetro-cyber-data.js
+   Trilha TRANSPETRO Cyber.
+8. cfaq-data.js
+   Trilha CFAQ-MOC.
+9. flashcards-priority-data.js, flashcards-data.js e flashcards-engine.js
+   Catálogo e repetição espaçada dos flashcards.
+10. security-bootstrap.js
+    Inicialização defensiva e helpers de segurança.
+11. assets/ e documentos/
+    Recursos locais e documentos de rastreabilidade.
 
-1A. app.js, styles.css e security-bootstrap.js
-    Interface, lógica, estilos e inicialização defensiva separados do HTML.
+DOCUMENTAÇÃO ATUAL
+- README.md
+- CHANGELOG.md
+- SECURITY.md
+- PRIVACIDADE.md
+- GUIA_PUBLICACAO_SEGURA_GITHUB_PAGES.md
+- RELATORIO_IMPLEMENTACAO_VISUAIS_DATAPREV_V1.8.1.md
+- RELATORIO_VALIDACAO_VISUAIS_DATAPREV_V1.8.1.md
+- RELATORIO_AUDITORIA_SEGURANCA_V1.8.1.md
 
-2. cfaq-data.js
-   Dados modulares da trilha CFAQ-MOC Nacional: módulos, microlições, questões, textos-base, vídeos e referências.
+DOCUMENTAÇÃO HISTÓRICA E EDITORIAL
+- Relatórios do Mastery Engine v1.8.0.
+- Relatórios e mapeamentos TRANSPETRO Cyber v1.7.x.
+- Relatórios DATAPREV histórico, IBGE, CFAQ-MOC e flashcards.
 
-2E. dataprev-history-data.js
-    Banco histórico DATAPREV com 184 questões oficiais válidas, textos-base, metadados de provas e gabaritos definitivos.
+FERRAMENTAS DE VALIDAÇÃO
+- tools/validate-dataprev-visuals.js — cobertura 77/77, passos, tipos, renderer, CSS e carregamento.
+- tools/validate-render-templates.js — templates centrais das cinco trilhas.
+- tools/validate-adaptive-engine.js — Mastery Engine, migração, retenção, confiança, ritmo e plano.
+- tools/validate-transpetro-cyber.js — quinta trilha.
+- tools/validate-cfaq-course.js — CFAQ-MOC.
+- tools/validate-dataprev-history.js — banco histórico DATAPREV.
+- tools/validate-flashcards.js — flashcards.
+- tools/validate-video-links.js — recursos audiovisuais.
+- tools/security-audit-static.js — auditoria estática sem dependências externas.
+- tools/smoke-test-dom.js e tools/security-audit.js — testes dinâmicos quando jsdom estiver instalado.
 
-2A. flashcards-priority-data.js
-    Reúne 80 cartões estratégicos, a metodologia de incidência e as fontes oficiais.
-
-2B. flashcards-data.js
-    Constrói os 341 cartões-base e integra o catálogo total de 421 flashcards.
-
-2C. flashcards-engine.js
-    Motor local de repetição espaçada, migração e agendamento dos cartões.
-
-2D. adaptive-engine.js
-    Motor de domínio por microlição, plano diário e revisão adaptativa das lições.
-
-3. assets/cfaq/
-   Imagens extraídas das questões CFAQ-MOC, sem Base64 no HTML principal.
-
-4. README.md
-   Documentação geral, conteúdo das trilhas, execução, GitHub Pages, privacidade e limitações.
-
-5. logo.svg
-   Logotipo vetorial usado na interface.
-
-6. favicon.svg, favicon.ico, favicon-32x32.png, favicon-192x192.png e apple-touch-icon.png
-   Identidade visual da aba do navegador, atalhos e dispositivos móveis.
-
-7. site.webmanifest
-   Metadados para instalação e identificação do site como aplicação web.
-
-8. .nojekyll
-   Impede que o GitHub Pages processe o projeto com Jekyll.
-
-DOCUMENTAÇÃO DA TRILHA IBGE
-9. MATRIZ_CURRICULAR_IBGE.md
-   Conversão do Anexo III em módulos e microlições.
-
-10. MAPEAMENTO_EDITAL_IBGE.md
-   Relaciona cada item do Anexo III às microlições correspondentes.
-
-11. CURADORIA_DE_MATERIAIS_IBGE.md
-   Critérios, fontes audiovisuais, fontes oficiais e limitações da curadoria.
-
-12. RELATORIO_VALIDACAO_IBGE.md
-   Contagens e verificações automáticas da trilha revisada.
-
-13. RELATORIO_EXPANSAO_IBGE_V2.md
-   Detalha a ampliação do banco, a integração da prova histórica e a nova curadoria audiovisual.
-
-14. documentos/ibge/
-    Edital, anexos enviados, material do Censo Agropecuário, prova de 2019, gabaritos e pareceres.
-
-15. documentos/ibge/LEIA-ME.txt
-    Explicação da origem e do uso dos documentos locais.
-
-DOCUMENTAÇÃO E FERRAMENTAS CFAQ-MOC
-16. MAPEAMENTO_CFAQ_MOC.md
-    Matriz dos 10 módulos, 30 microlições, questões e videoaulas.
-
-17. RELATORIO_IMPORTACAO_CFAQ_MOC.md e AUDITORIA_IMPORTACAO_CFAQ_MOC.json
-    Registro das questões importadas, omitidas, duplicadas, textos-base e imagens.
-
-18. RELATORIO_VALIDACAO_CFAQ_MOC.md e RELATORIO_TESTE_FLUXO_CFAQ_MOC.md
-    Resultado das verificações estruturais e do teste de fluxo DOM.
-
-18A. RELATORIO_IMPLEMENTACAO_FLASHCARDS.md e RELATORIO_VALIDACAO_FLASHCARDS.md
-     Escopo da nova função, contagens, migração, agendamento e validações.
-
-18B. RELATORIO_FLASHCARDS_ALTA_INCIDENCIA.md
-     Metodologia, ranking, fontes e limites dos 80 cartões estratégicos.
-
-18C. RELATORIO_AUDITORIA_VIDEOAULAS_V1.3.1.md e AUDITORIA_VIDEOAULAS_V1.3.1.json
-     Revisão dos 197 recursos audiovisuais, substituições efetuadas e validação automática.
-
-18D. RELATORIO_IMPLEMENTACAO_ADAPTATIVA_V1.5.0.md e PENDENCIAS_EDITORIAIS_FUTURAS.md
-     Funcionamento da nova camada adaptativa e materiais que dependem do responsável pelo projeto.
-
-18E. RELATORIO_INCORPORACAO_DATAPREV_HISTORICO_V1.6.0.md e documentos/dataprev/
-     Auditoria da incorporação FGV 2024/Cebraspe 2023, provas-fonte e rastreabilidade dos gabaritos.
-
-19. documentos/cfaq-moc/LEIA-ME.txt
-    Escopo, fontes oficiais e limite da atribuição institucional.
-
-20. Relatórios de auditoria de segurança v1.3.0 a v1.6.0, AUDITORIA_SEGURANCA_V1.6.0.json, PRIVACIDADE.md, SECURITY.md e GUIA_PUBLICACAO_SEGURA_GITHUB_PAGES.md
-    Auditorias, transparência ao usuário, política de vulnerabilidades e checklist de publicação.
-
-21. tools/ e package.json
-    Geradores, validações estruturais, auditoria de videoaulas, teste de flashcards e teste de fluxo DOM. O npm é opcional e não é necessário para usar o site.
-
-ARQUIVOS GERAIS
-22. CHANGELOG.md
-    Registro das alterações das versões IBGE, CFAQ-MOC e flashcards.
-
-23. SHA256SUMS.txt
-    Resumos criptográficos para conferir a integridade dos arquivos do pacote.
+COMANDOS
+- `npm run test:static` — suíte estática completa.
+- `npm ci && npm test` — suíte completa com jsdom.
+- `npm run checksums` — atualiza SHA256SUMS.txt.
 
 PUBLICAÇÃO NO GITHUB PAGES
 1. Extraia o ZIP.
-2. Envie todo o conteúdo para a raiz da branch main.
-3. Abra Settings > Pages.
-4. Escolha Deploy from a branch, branch main e pasta /(root).
-5. Salve e aguarde a publicação.
-6. Marque Enforce HTTPS assim que a opção estiver disponível.
-
-Não publique arquivos-fonte brutos, backups privados, credenciais ou dados pessoais.
-
-O projeto é estático, não exige npm, compilação, banco de dados ou servidor próprio.
-O progresso é salvo no navegador e permanece separado por trilha.
-
-
-VERSÃO BANCO HISTÓRICO DATAPREV V1.6.0
-- 69 questões válidas da prova FGV 2024; questão 13 anulada omitida.
-- 115 itens válidos da prova Cebraspe 2023; cinco itens anulados omitidos.
-- Gabaritos definitivos, oito textos-base e três figuras vetoriais.
-- Simulados históricos na ordem original e pontuação líquida Cebraspe.
-- 442 questões no curso DATAPREV e 1.335 questões no projeto.
-
-
-VERSÃO ADAPTATIVA V1.5.0
-- Plano diário compatível com a meta de tempo do aluno.
-- Estados Não estudado, Em aprendizagem, Em consolidação e Dominado por microlição.
-- Diagnóstico detalhado por disciplina e identificação de pontos fracos.
-- Caderno de erros com itens ativos e superados após dois acertos em dias diferentes.
-- Revisão de lições com intervalos progressivos conforme desempenho.
-- Feedback específico por alternativa quando o banco possui esse comentário.
-- Migração do progresso anterior preservada.
-
-
-VERSÃO THUMBNAILS V1.4.0
-- Thumbnails oficiais nos vídeos diretos, com toda a imagem clicável.
-- Capas próprias para playlists, coleções temáticas e buscas de aulas.
-- Sem iframe ou reprodução de vídeo incorporada.
-- CSP permite imagens externas somente em i.ytimg.com.
-- no-referrer aplicado às thumbnails e aos links externos.
-
-
-VERSÃO VIDEOAULAS V1.3.1
-- 197 vídeos e coleções revisados nas quatro trilhas.
-- 7 referências diretas corrigidas e 2 buscas de canal atualizadas.
-- 1.538 verificações automáticas dos catálogos aprovadas.
-- Referências aposentadas conhecidas bloqueadas pelo teste de regressão.
-
-
-VERSÃO SEGURA V1.3.0
-- CSP e scripts externos locais.
-- Sem iframe, analytics ou conexão automática de terceiros na versão 1.3.0 original.
-- URLs, caminhos e dados locais validados e limitados.
-- 38 verificações de segurança aprovadas.
-
-
-VERSÃO FLASHCARDS V1.2.0
-- 421 cartões: 341 cartões-base e 80 cartões estratégicos de alta incidência.
-- 133 DATAPREV, 80 ASON, 98 IBGE e 30 CFAQ-MOC.
-- Repetição espaçada com Errei, Difícil, Bom e Fácil.
-- Sessões de cartões vencidos, novos, pontos fracos e módulos.
-- Filtros por disciplina e módulo.
-- Migração segura do progresso anterior.
-
-
-VERSÃO CFAQ-MOC NACIONAL V1
-- 10 módulos.
-- 30 microlições.
-- 406 questões ativas.
-- 30 questões no diagnóstico.
-- 17 videoaulas.
-- 11 conjuntos históricos de 2023 a 2026.
-- 21 imagens e 17 textos-base incorporados.
-
-
-VERSÃO IBGE V2
-- 98 microlições.
-- 327 questões.
-- 80 recursos audiovisuais.
-- 32 questões oficiais de 2019 integradas.
-- 39 questões no diagnóstico.
+2. Envie o conteúdo para a raiz da branch principal.
+3. Em Settings > Pages, selecione publicação a partir da branch e / (root).
+4. Compare SHA-256 antes de publicar.

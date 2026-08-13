@@ -1,4 +1,4 @@
-/* Versa Concursos — flashcards estratégicos de alta incidência v1.2.0. */
+/* Versa Concursos — flashcards estratégicos de alta incidência v1.7.1. */
 (() => {
   'use strict';
 
@@ -50,6 +50,18 @@
       sample: 'Destaques da amostra: geometria plana (34), termos da oração e períodos (27), verbos/tempos/vozes (23), volumes/escalas/unidades (20) e substantivos/artigos/adjetivos (19).',
       sources: [
         { label: 'Provas e gabaritos CFAQ-MOC 2026 — CPES', url: 'https://www.marinha.mil.br/cpes/node/472' }
+      ]
+    }    ,
+    'transpetro-cyber': {
+      label: 'Edital Transpetro 2026.4 + Prova CESGRANRIO 2023.2',
+      evidence: 'edital-e-prova',
+      methodology: 'Seleção baseada no programa integral da Ênfase 7 do edital 2026.4 e nas 50 questões específicas da Prova 5 de 2023.2 fornecida com gabarito oficial. A amostra histórica orienta prioridade, sem pretender prever a prova de 2026.',
+      sample: '20 cartões estratégicos: 18 específicos e 2 de conhecimentos gerais; forte ênfase em criptografia/PKI/TLS/IPsec, ataques de rede, ATT&CK, normas ISO, privacidade, OT e hardening.',
+      sources: [
+        { label: 'Edital Transpetro 2026.4 — fonte fornecida pelo usuário', url: 'https://www.cesgranrio.org.br/' },
+        { label: 'NIST Cybersecurity Framework 2.0', url: 'https://www.nist.gov/cyberframework' },
+        { label: 'MITRE ATT&CK', url: 'https://attack.mitre.org/' },
+        { label: 'OWASP Top 10', url: 'https://owasp.org/www-project-top-ten/' }
       ]
     }
   };
@@ -121,6 +133,28 @@
       card('ibge-hi-019', 'ibge-l088', 'Qual princípio-chave da Convenção OIT 169 deve ser lembrado?', 'Povos interessados devem ser consultados, por procedimentos apropriados e instituições representativas, quando medidas legislativas ou administrativas possam afetá-los diretamente.', ['A consulta deve ser de boa-fé e adequada às circunstâncias.', 'O programa também exige CF, ADCT 68 e legislação correlata.'], 'A Convenção OIT 169 está nominalmente listada no conteúdo programático.'),
       card('ibge-hi-020', 'ibge-l094', 'Por que a coleta censitária em Povos e Comunidades Tradicionais exige abordagem diferenciada?', 'Para adequar acesso, comunicação, territorialidade, calendários, interlocução e protocolos às especificidades locais, reduzindo omissão e erro de cobertura.', ['Padronização operacional não dispensa adaptação responsável.', 'Confiança e liderança local afetam a qualidade do dado.'], 'PCTs, cobertura e abordagem censitária diferenciada integram o conteúdo específico.'),
     ],
+    'transpetro-cyber': [
+      card('trc-hi-001', 'trc-l040', 'Por que AES e SHA-256 não devem ser confundidos?', 'AES é cifra de bloco simétrica com bloco de 128 bits; SHA-256 é função hash que gera resumo de 256 bits.', ['AES oferece cifragem reversível com chave; hash é unidirecional.', 'Na prova histórica, criptografia ocupou várias questões consecutivas.'], 'Questões 22, 23, 25, 26 e 28 da prova específica de 2023 exploraram fundamentos criptográficos.'),
+      card('trc-hi-002', 'trc-l044', 'Qual mapa mental resolve TLS, SSL, IPsec e IKE?', 'TLS protege sessões de comunicação; SSLv3 é legado/obsoleto; IPsec protege na camada IP; IKE negocia associações de segurança e chaves para IPsec.', ['HTTPS usa TLS.', 'POODLE é referência histórica ligada ao SSLv3.'], 'Questões 27, 29, 30, 43 e 60 da prova de 2023 tocaram TLS/IPsec/SSL.'),
+      card('trc-hi-003', 'trc-l042', 'Quem assina um certificado e como o titular prova posse?', 'A AC emissora assina o certificado; o titular demonstra controle por meio da chave privada correspondente à chave pública certificada.', ['A chave privada não é publicada no certificado.', 'Validade, cadeia e revogação também importam.'], 'Questões 24 e 62 da prova histórica cobraram PKI e prova de posse.'),
+      card('trc-hi-004', 'trc-l017', 'O que caracteriza ARP spoofing?', 'Induzir associações falsas entre endereços IP e MAC em uma rede local, podendo desviar tráfego e favorecer MITM.', ['ARP não possui autenticação nativa robusta.', 'Proteções incluem segmentação, inspeção e controles de camada 2.'], 'Questão 31 da prova de 2023 cobrou ARP spoofing diretamente.'),
+      card('trc-hi-005', 'trc-l034', 'Quais são os três papéis de 802.1X e onde entram EAP e RADIUS?', 'Suplicante pede acesso; autenticador controla a porta; servidor AAA valida. EAP participa da autenticação e RADIUS é comum entre autenticador e servidor.', ['O switch pode atuar como autenticador.', 'A porta controlada permanece limitada antes da autorização.'], 'Questões 34 e 63 da prova histórica cobraram EAP e RADIUS.'),
+      card('trc-hi-006', 'trc-l026', 'No MITRE ATT&CK, o que uma tática representa?', 'A tática representa o objetivo do adversário — o “porquê” de executar uma técnica ou sub-técnica.', ['Técnica representa o “como”.', 'Procedimento é a implementação concreta observada.'], 'Questões 42 e 47 cobraram ATT&CK; o edital 2026 amplia para matrizes, TTPs e mitigations.'),
+      card('trc-hi-007', 'trc-l036', 'Como estudar OWASP Top 10 para 2026 sem errar questões históricas?', 'Use a versão indicada no enunciado para questões históricas e acompanhe a versão corrente para o edital 2026, que não fixa edição.', ['A prova 2023 citou explicitamente OWASP Top 10 2021.', 'A versão corrente é uma camada de atualização, não motivo para reescrever o gabarito antigo.'], 'Questão 44 cobrou OWASP Top 10 2021; o programa 2026 mantém OWASP Top 10 sem versão.'),
+      card('trc-hi-008', 'trc-l014', 'Qual diferença de prova entre flooding, Slowloris e SYN flood?', 'Flooding enfatiza volume; Slowloris mantém muitas conexões HTTP incompletas/lentas; SYN flood explora o estabelecimento de conexões TCP para exaurir recursos.', ['Todos afetam disponibilidade, por mecanismos diferentes.', 'Identifique a camada e o recurso que está sendo consumido.'], 'Questões 33, 39 e 50 da prova histórica exploraram DoS por mecanismos distintos.'),
+      card('trc-hi-009', 'trc-l022', 'O que distingue spear-phishing de phishing genérico?', 'Spear-phishing é direcionado e usa contexto do alvo para aumentar credibilidade; phishing genérico tende a ser mais amplo.', ['Pretexting constrói uma narrativa plausível.', 'Verificação fora de banda reduz risco.'], 'A prova histórica cobrou ferramenta de spear-phishing/engenharia social na questão 38.'),
+      card('trc-hi-010', 'trc-l024', 'Que associação deve ficar automática para keylogger?', 'Keylogger registra entradas de teclado e pode capturar credenciais; screenlogger captura conteúdo visual da tela.', ['Rootkit se liga a ocultação/persistência.', 'Botnet é um conjunto de dispositivos controlados.'], 'Questão 40 da prova histórica cobrou keylogger diretamente.'),
+      card('trc-hi-011', 'trc-l052', 'Qual item clássico pertence à avaliação de desempenho do SGSI?', 'Auditoria interna. O SGSI também exige monitoramento, medição, análise crítica e melhoria orientada a risco.', ['27001 contém requisitos do sistema de gestão.', '27002 orienta controles.'], 'Questão 51 da prova histórica cobrou auditoria interna na ISO 27001.'),
+      card('trc-hi-012', 'trc-l054', 'O que caracteriza uma análise qualitativa de risco?', 'Uso de categorias ou escalas descritivas, como baixo/médio/alto, para probabilidade e impacto conforme critérios definidos.', ['Quantitativa busca valores numéricos conforme o método.', 'Avaliação compara resultados com critérios de risco.'], 'Questão 54 da prova histórica cobrou análise qualitativa na ISO 27005.'),
+      card('trc-hi-013', 'trc-l060', 'O que é PIA na ISO/IEC 29134?', 'Avaliação de impacto de privacidade: identifica impactos/riscos de privacidade e documenta medidas para tratá-los em processos, sistemas ou iniciativas.', ['Deve ser feita cedo o bastante para influenciar decisões.', 'Complementa governança e proteção de dados.'], 'Questão 58 da prova histórica cobrou PIA diretamente.'),
+      card('trc-hi-014', 'trc-l059', 'O que significa minimização de dados?', 'Limitar coleta, acesso, retenção e tratamento ao que é necessário para finalidades legítimas e definidas.', ['Need-to-know reforça minimização.', 'Anonimização é conceito diferente.'], 'Questões 57 e 59 exploraram privacidade, anonimização e minimização.'),
+      card('trc-hi-015', 'trc-l048', 'Por que segurança de OT não pode copiar mecanicamente controles de TI?', 'OT interage com processos físicos; controles precisam preservar disponibilidade, confiabilidade e safety além de reduzir risco cibernético.', ['IEC 62443 é referência central de segurança industrial.', 'Stuxnet é referência histórica de ameaça a ICS.'], 'Questões 61, 67 e 70 concentraram OT, Stuxnet, NIST 800-82 e IEC 62443.'),
+      card('trc-hi-016', 'trc-l046', 'Qual diferença entre chmod e chown no Linux?', 'chmod altera permissões; chown altera proprietário/grupo. Em octal, 640 corresponde a rw- r-- ---.', ['Inode armazena metadados do arquivo.', 'No Windows, BitLocker e Firewall são controles nativos relevantes.'], 'Questões 64, 66, 68 e 69 cobraram Linux e Windows na prova histórica.'),
+      card('trc-hi-017', 'trc-l062', 'Quais são as seis funções do NIST CSF 2.0?', 'Govern, Identify, Protect, Detect, Respond e Recover.', ['Govern ganhou destaque como função no CSF 2.0.', 'As funções descrevem resultados e não uma sequência rígida.'], 'NIST CSF 2.0 consta expressamente do edital 2026; é atualização posterior à prova de 2023.'),
+      card('trc-hi-018', 'trc-l063', 'O que é o IG1 nos CIS Controls v8.1?', 'É o conjunto de salvaguardas de higiene cibernética essencial recomendado como ponto de partida para todas as organizações.', ['IG2 e IG3 ampliam profundidade conforme perfil de risco e capacidade.', 'v8.1 incorporou alinhamentos modernos de governança.'], 'CIS Controls 8.1 consta expressamente do edital 2026.'),
+      card('trc-hi-019', 'trc-l001', 'Qual é a regra de ouro para inferência na CESGRANRIO?', 'A conclusão precisa decorrer de pistas do texto e não pode contradizer informação explícita.', ['Volte ao trecho e valide a alternativa.', 'Evite extrapolação e opinião externa.'], 'Português vale 10 das 70 questões no modelo 2026 e é matéria eliminatória dentro de Conhecimentos Gerais.'),
+      card('trc-hi-020', 'trc-l007', 'How should you approach the main idea in an English text?', 'Use recurring ideas, topic sentences, paragraph relationships and the author’s purpose; do not depend on translating every word.', ['Context can support vocabulary inference.', 'Reference words and connectors are central clues.'], 'Inglês vale 10 das 70 questões no modelo 2026 e é matéria eliminatória dentro de Conhecimentos Gerais.'),
+    ],
     cfaq: [
       card('cfaq-hi-001', 'cfaq-p13', 'Como separar período simples de período composto?', 'Período simples tem uma oração; período composto tem duas ou mais. Como regra inicial, conte verbos e locuções verbais que funcionam como núcleos de oração.', ['Coordenação liga orações sintaticamente independentes.', 'Subordinação cria dependência sintática.'], '27 questões da amostra histórica: 2º tema mais frequente da base CFAQ-MOC.'),
       card('cfaq-hi-002', 'cfaq-p12', 'Como transformar voz ativa em voz passiva analítica?', 'O objeto direto vira sujeito paciente; use ser no mesmo tempo verbal mais o particípio; o sujeito da ativa pode virar agente da passiva.', ['“A tripulação conferiu a carga” → “A carga foi conferida pela tripulação”.', 'Verbos sem objeto direto normalmente não admitem essa transformação.'], '23 questões da amostra histórica: 3º tema mais frequente.'),
@@ -146,7 +180,7 @@
   };
 
   window.VERSA_PRIORITY_FLASHCARDS = Object.freeze({
-    version: '1.2.0',
+    version: '1.7.1',
     basisByCourse: Object.freeze(basisByCourse),
     cardsByCourse: Object.freeze(cardsByCourse)
   });

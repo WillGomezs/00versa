@@ -1,4 +1,4 @@
-/* Versa Concursos — aplicação adaptativa e endurecida v1.6.0. */
+/* Versa Concursos — aplicação interativa e Mastery Engine v1.8.1 + Visual Learning DATAPREV. */
 (() => {
   "use strict";
   function buildDataprevCourse() {
@@ -23100,6 +23100,7 @@
   };
 
   if (window.CFAQ_DATA) COURSES.cfaq = window.CFAQ_DATA;
+  if (window.TRANSPETRO_CYBER_DATA) COURSES["transpetro-cyber"] = window.TRANSPETRO_CYBER_DATA;
 
   // ===== Versa Concursos v5 — auditoria curricular e correção das lacunas =====
   (function applyVersaV5() {
@@ -25937,8 +25938,11 @@
     errors: [],
     diagnostic: null,
     simulations: [],
+    pretests: {},
+    recall: {},
+    studySessions: [],
     flashcards: { cards: {}, sessions: [] },
-    adaptive: { version: 1, attempts: [], lessonReviews: {} },
+    adaptive: { version: 2, attempts: [], lessonReviews: {} },
   });
   function normalizeProgress(raw) {
     const base = defaultProgress(),
@@ -25948,12 +25952,8 @@
       .filter((id) => typeof id === "string" && id.length <= 100)
       .slice(-2000);
     p.scores = Object.fromEntries(
-      Object.entries(
-        source.scores && typeof source.scores === "object" ? source.scores : {},
-      )
-        .filter(
-          ([id, value]) => id.length <= 100 && Number.isFinite(Number(value)),
-        )
+      Object.entries(source.scores && typeof source.scores === "object" ? source.scores : {})
+        .filter(([id, value]) => id.length <= 100 && Number.isFinite(Number(value)))
         .slice(-2000)
         .map(([id, value]) => [id, Math.min(100, Math.max(0, Number(value)))]),
     );
@@ -25974,11 +25974,41 @@
         recoveryStreak: Math.min(2, Math.max(0, Number(item.recoveryStreak) || 0)),
         recoveryDates: [...new Set(Array.isArray(item.recoveryDates) ? item.recoveryDates.filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)) : [])].slice(-2),
         resolvedAt: /^\d{4}-\d{2}-\d{2}$/.test(item.resolvedAt || "") ? item.resolvedAt : null,
+        category: Object.prototype.hasOwnProperty.call(window.VERSA_ADAPTIVE_ENGINE?.errorTypes || {}, item.category)
+          ? item.category
+          : item.confidence === "high" ? "erro-convicto" : item.confidence === "guess" ? "chute" : "conteudo",
+        confidence: Object.prototype.hasOwnProperty.call(window.VERSA_ADAPTIVE_ENGINE?.confidence || {}, item.confidence) ? item.confidence : null,
+        cause: Object.prototype.hasOwnProperty.call(window.VERSA_ADAPTIVE_ENGINE?.errorTypes || {}, item.cause) ? item.cause : null,
+        responseMs: Number.isFinite(Number(item.responseMs)) ? Math.min(3600000, Math.max(0, Number(item.responseMs))) : null,
       }))
       .filter((item) => item.questionId && item.lessonId);
-    p.simulations = (
-      Array.isArray(source.simulations) ? source.simulations : []
-    )
+    p.simulations = (Array.isArray(source.simulations) ? source.simulations : [])
+      .filter((item) => item && typeof item === "object")
+      .slice(-100);
+    p.pretests = Object.fromEntries(
+      Object.entries(source.pretests && typeof source.pretests === "object" ? source.pretests : {})
+        .filter(([id, item]) => id.length <= 100 && item && typeof item === "object")
+        .slice(-2000)
+        .map(([id, item]) => [id, {
+          questionId: String(item.questionId || "").slice(0, 100),
+          selected: Number.isInteger(item.selected) ? item.selected : null,
+          correct: item.correct === true,
+          skipped: item.skipped === true,
+          date: /^\d{4}-\d{2}-\d{2}$/.test(item.date || "") ? item.date : today(),
+          confidence: Object.prototype.hasOwnProperty.call(window.VERSA_ADAPTIVE_ENGINE?.confidence || {}, item.confidence) ? item.confidence : null,
+        }]),
+    );
+    p.recall = Object.fromEntries(
+      Object.entries(source.recall && typeof source.recall === "object" ? source.recall : {})
+        .filter(([id, item]) => id.length <= 100 && item && typeof item === "object")
+        .slice(-2000)
+        .map(([id, item]) => [id, {
+          rating: ["again", "partial", "good"].includes(item.rating) ? item.rating : null,
+          date: /^\d{4}-\d{2}-\d{2}$/.test(item.date || "") ? item.date : today(),
+          attempts: Math.min(10000, Math.max(0, Number(item.attempts) || 0)),
+        }]),
+    );
+    p.studySessions = (Array.isArray(source.studySessions) ? source.studySessions : [])
       .filter((item) => item && typeof item === "object")
       .slice(-100);
     p.flashcards = window.VERSA_FLASHCARDS_ENGINE
@@ -26017,8 +26047,15 @@
     lessonId: null,
     selected: {},
     answered: {},
-    diag: { index: 0, answers: [], details: [], selected: null, done: false },
+    confidence: {},
+    questionStarted: {},
+    lessonPrep: { skipped: false, selected: null, confidence: null, startedAt: null },
+    recallReveal: false,
+    recallDraft: "",
+    recallRating: null,
+    diag: { index: 0, answers: [], details: [], selected: null, confidence: null, startedAt: Date.now(), done: false },
     sim: null,
+    smartSession: null,
     flash: emptyFlashState(),
     adminTab: "overview",
   };
@@ -26031,7 +26068,7 @@
       JSON.stringify(normalizeProgress(p)),
     );
   }
-  function recordQuestionAttempt(p, q, selected, kind) {
+  function recordQuestionAttempt(p, q, selected, kind, meta = {}) {
     const correct = selected === q.correct;
     const questionId = q.sourceId || q.id;
     const originalQuestion = q.sourceId
@@ -26042,6 +26079,12 @@
         ? originalQuestion.options.indexOf(q.options[selected])
         : -1;
     const recordedSelected = originalSelectedIndex >= 0 ? originalSelectedIndex : null;
+    const confidence = Object.prototype.hasOwnProperty.call(window.VERSA_ADAPTIVE_ENGINE.confidence, meta.confidence)
+      ? meta.confidence
+      : null;
+    const responseMs = Number.isFinite(Number(meta.responseMs))
+      ? Math.min(3600000, Math.max(0, Number(meta.responseMs)))
+      : null;
     p.adaptive = window.VERSA_ADAPTIVE_ENGINE.recordAttempt(p.adaptive, {
       kind,
       questionId,
@@ -26049,11 +26092,15 @@
       correct,
       selected: recordedSelected,
       date: today(),
+      confidence,
+      responseMs,
+      recallUsed: meta.recallUsed === true,
+      transfer: meta.transfer === true,
     });
-    let error = p.errors.find(
-      (item) => item.questionId === questionId && item.status !== "resolved",
-    );
+    if (kind === "pretest") return correct;
+    let error = p.errors.find((item) => item.questionId === questionId && item.status !== "resolved");
     if (!correct) {
+      const inferredCategory = confidence === "high" ? "erro-convicto" : confidence === "guess" ? "chute" : "conteudo";
       if (!error) {
         error = {
           questionId,
@@ -26064,6 +26111,9 @@
           recoveryStreak: 0,
           recoveryDates: [],
           resolvedAt: null,
+          category: inferredCategory,
+          confidence,
+          responseMs,
         };
         p.errors.push(error);
       } else {
@@ -26071,6 +26121,10 @@
         error.date = today();
         error.recoveryStreak = 0;
         error.recoveryDates = [];
+        error.confidence = confidence || error.confidence || null;
+        error.responseMs = responseMs ?? error.responseMs ?? null;
+        if (confidence === "high") error.category = "erro-convicto";
+        else if (confidence === "guess" && error.category !== "erro-convicto") error.category = "chute";
       }
     } else if (error && !error.recoveryDates.includes(today())) {
       error.recoveryDates.push(today());
@@ -26083,6 +26137,13 @@
     }
     p.errors = p.errors.slice(-1000);
     return correct;
+  }
+  function setErrorCategory(p, questionId, category) {
+    if (!Object.prototype.hasOwnProperty.call(window.VERSA_ADAPTIVE_ENGINE.errorTypes, category)) return;
+    const error = p.errors.find((item) => item.questionId === questionId && item.status !== "resolved");
+    if (!error) return;
+    if (error.category === "erro-convicto") error.cause = category;
+    else error.category = category;
   }
   function scheduleLessonReview(p, lessonId, score) {
     p.adaptive = window.VERSA_ADAPTIVE_ENGINE.scheduleLesson(
@@ -26132,7 +26193,7 @@
     bindView();
   }
   function onboarding() {
-    return `<main class="onboard"><section class="on-card"><div style="display:flex;justify-content:space-between;align-items:center">${logo()}<span class="badge">100% gratuito</span></div><span class="eyebrow" style="margin-top:30px">PLATAFORMA MULTITRILHAS</span><h1>Uma rota clara para cada prova.</h1><p>Estude com microlições, flashcards, questões, revisões espaçadas, diagnóstico e simulados. Seu progresso fica separado em cada curso.</p><div class="privacy-notice"><strong>🔒 Privacidade por padrão</strong><span>Não usamos login, anúncios, cookies de rastreamento ou telemetria. Use apenas um apelido e não informe dados pessoais ou senhas.</span></div><div class="form-grid"><label>Apelido<input id="ob-name" maxlength="50" autocomplete="nickname" placeholder="Como podemos chamar você?"></label><label>Tempo diário<select id="ob-time"><option value="20">20 minutos</option><option value="30">30 minutos</option><option value="45" selected>45 minutos</option><option value="60">1 hora</option><option value="90">1h30</option></select></label></div><button id="ob-start" class="primary large" disabled>Começar a estudar →</button></section><aside class="on-preview"><div class="preview">⌘ DATAPREV — Redes e Segurança</div><div class="preview">⚓ ASON 2027 — Humanas e Exatas</div><div class="preview">◉ IBGE 2026 — Ciências Sociais/Antropologia</div><div class="preview active">⚓ CFAQ-MOC — Moço de Convés</div><div class="preview">◆ 421 flashcards adaptativos</div></aside></main>`;
+    return `<main class="onboard"><section class="on-card"><div style="display:flex;justify-content:space-between;align-items:center">${logo()}<span class="badge">100% gratuito</span></div><span class="eyebrow" style="margin-top:30px">PLATAFORMA MULTITRILHAS</span><h1>Uma rota clara para cada prova.</h1><p>Estude com microlições, flashcards, questões, revisões espaçadas, diagnóstico e simulados. Seu progresso fica separado em cada curso.</p><div class="privacy-notice"><strong>🔒 Privacidade por padrão</strong><span>Não usamos login, anúncios, cookies de rastreamento ou telemetria. Use apenas um apelido e não informe dados pessoais ou senhas.</span></div><div class="form-grid"><label>Apelido<input id="ob-name" maxlength="50" autocomplete="nickname" placeholder="Como podemos chamar você?"></label><label>Tempo diário<select id="ob-time"><option value="20">20 minutos</option><option value="30">30 minutos</option><option value="45" selected>45 minutos</option><option value="60">1 hora</option><option value="90">1h30</option></select></label></div><button id="ob-start" class="primary large" disabled>Começar a estudar →</button></section><aside class="on-preview"><div class="preview">⌘ DATAPREV — Redes e Segurança</div><div class="preview">⚓ ASON 2027 — Humanas e Exatas</div><div class="preview">◉ IBGE 2026 — Ciências Sociais/Antropologia</div><div class="preview">⚓ CFAQ-MOC — Moço de Convés</div><div class="preview active">⛨ TRANSPETRO 2026 — Cyber</div><div class="preview">◆ 505 flashcards adaptativos</div></aside></main>`;
   }
   function bindOnboarding() {
     const n = $("#ob-name"),
@@ -26181,7 +26242,7 @@
       )
       .join(
         "",
-      )}</div><div class="side-bottom"><button class="profile-button" data-view="admin"><span>⚙</span><span><strong>Administração</strong><small>Conteúdo local</small></span></button><button class="profile-button" data-view="profile"><b class="avatar">${esc(state.profile.name[0] || "A").toUpperCase()}</b><span><strong>${esc(state.profile.name)}</strong><small>Plano gratuito</small></span></button></div></aside>${state.sidebar ? '<button class="sidebar-overlay" data-action="close"></button>' : ""}<div class="main"><header class="topbar"><button class="iconbtn mobile" data-action="open">☰</button><div class="top-title"><span>${esc(c.exam.board)}</span><strong>${esc(c.name)} · ${esc(c.subtitle)}</strong></div><div class="top-actions"><div class="chip">♨ <strong>${p.streak}</strong><span>dias</span></div><div class="chip">✦ <strong>${p.xp}</strong><span>XP</span></div><button class="iconbtn" data-action="theme">${state.profile.theme === "dark" ? "☀" : "◐"}</button></div></header><main class="content">${view()}</main></div></div>`;
+      )}</div><div class="side-bottom"><button class="profile-button" data-view="admin"><span>⚙</span><span><strong>Administração</strong><small>Conteúdo local</small></span></button><button class="profile-button" data-view="profile"><b class="avatar">${esc(state.profile.name[0] || "A").toUpperCase()}</b><span><strong>${esc(state.profile.name)}</strong><small>Plano gratuito</small></span></button></div></aside>${state.sidebar ? '<button class="sidebar-overlay" data-action="close"></button>' : ""}<div class="main"><header class="topbar"><button class="iconbtn mobile" data-action="open">☰</button><div class="top-title"><span>${esc(c.exam.board)}</span><strong>${esc(c.name)} · ${esc(c.subtitle)}</strong></div><div class="top-actions">${state.smartSession ? `<button class="session-chip" data-view="studySession">▶ Sessão ${state.smartSession.plan.totalMinutes}m</button>` : ""}<div class="chip">♨ <strong>${p.streak}</strong><span>dias</span></div><div class="chip">✦ <strong>${p.xp}</strong><span>XP</span></div><button class="iconbtn" data-action="theme">${state.profile.theme === "dark" ? "☀" : "◐"}</button></div></header><main class="content">${view()}</main></div></div>`;
   }
   function bindCommon() {
     $$("[data-view]").forEach(
@@ -26201,12 +26262,15 @@
           state.sidebar = false;
           state.lessonId = null;
           state.sim = null;
+          state.smartSession = null;
           state.flash = emptyFlashState();
           resetDiag();
           saveProfile();
           render();
         }),
     );
+    $$('[data-start-smart-session]').forEach((b) => (b.onclick = () => startSmartSession(Number(b.dataset.startSmartSession) || 30)));
+    $$('[data-quick-sim]').forEach((b) => (b.onclick = () => startSim(b.dataset.quickSim)));
     $$("[data-action]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -26230,6 +26294,7 @@
           state.activeCourse = b.dataset.startCourse;
           state.view = "dashboard";
           state.sim = null;
+          state.smartSession = null;
           state.flash = emptyFlashState();
           saveProfile();
           render();
@@ -26241,6 +26306,7 @@
       {
         courses: courseLibrary,
         dashboard,
+        studySession,
         path: learningPath,
         lesson: lessonPage,
         reviews,
@@ -26258,6 +26324,7 @@
   }
   function bindView() {
     document.onkeydown = null;
+    if (state.view === "studySession") bindStudySession();
     if (state.view === "lesson") bindLesson();
     if (state.view === "flashcards") bindFlashcards();
     if (state.view === "diagnostic") bindDiagnostic();
@@ -26300,29 +26367,48 @@
     );
   }
   function dashboard() {
-    const c = course(),
-      p = progress(),
+    const c = course(), p = progress(),
       due = p.reviews.filter((r) => r.due <= today()).length,
-      fcDue = flashDueCount(c, p),
-      pct = coursePct(c),
+      fcDue = flashDueCount(c, p), pct = coursePct(c),
       disciplines = [...new Set(c.units.map((u) => u.discipline || u.title))],
       mastery = window.VERSA_ADAPTIVE_ENGINE.courseMastery(c, p),
-      plan = window.VERSA_ADAPTIVE_ENGINE.buildDailyPlan(
-        c,
-        p,
-        state.profile.dailyMinutes,
-      ),
+      plan = window.VERSA_ADAPTIVE_ENGINE.buildDailyPlan(c, p, state.profile.dailyMinutes),
       priority = c.lessons.find((lesson) => lesson.id === plan.priorityLessonId) || nextLesson(c, p),
-      activeErrors = p.errors.filter((error) => error.status !== "resolved").length;
-    const planRows = plan.blocks
-      .map(
-        (block, index) =>
-          `<button class="daily-item plan-${block.type}" ${block.lessonId ? `data-lesson="${block.lessonId}"` : `data-view="${block.view}"`}><b>${index + 1}</b><div><strong>${esc(block.label)} — ${esc(block.title)}</strong><small>${block.minutes} min · ${esc(block.reason)}</small></div><em>→</em></button>`,
-      )
-      .join("");
-    return `<section><div class="hero"><div class="hero-main"><span class="badge">${c.icon} ${esc(c.status)}</span><h1>${esc(c.name)}</h1><h2>${esc(c.subtitle)}</h2><p>${esc(c.description)}</p><div class="adaptive-callout"><span>PLANO INTELIGENTE DE HOJE</span><strong>${esc(priority.title)}</strong><small>Prioridade calculada por revisões, erros, domínio e progressão.</small></div><div class="hero-actions"><button class="primary" data-lesson="${priority.id}">Estudar prioridade de hoje →</button><button class="secondary" data-view="path">Ver trilha completa</button><button class="secondary" data-view="flashcards">Estudar flashcards</button></div></div><div class="hero-side"><span>DOMÍNIO ESTIMADO</span><strong>${mastery.score}%</strong><p>${mastery.studied} de ${c.lessons.length} lições com evidências · ${pct}% concluído</p><button class="secondary" data-view="diagnostic">${p.diagnostic ? "Refazer diagnóstico" : "Fazer diagnóstico"}</button></div></div><div class="metrics">${metric("Revisões de hoje", due + fcDue, `${due} lições · ${fcDue} flashcards`)}${metric("Pontos fracos", activeErrors, "erros ativos")}${metric("Conteúdos dominados", mastery.counts.mastered, "confirmação espaçada")}${metric("Simulados realizados", p.simulations.length, "nesta trilha")}</div><div class="dashboard-grid"><article class="panel"><div class="panel-head"><div><span class="eyebrow">SESSÃO PERSONALIZADA</span><h2>Seu estudo de hoje</h2></div><span class="badge">${plan.totalMinutes} min</span></div><div class="daily-list">${planRows}</div><p class="adaptive-method">O plano é transparente e local: nenhuma decisão é enviada a servidor externo.</p></article><aside class="panel"><div class="panel-head"><div><span class="eyebrow">ESTRUTURA</span><h2>${esc(c.exam.note)}</h2></div></div><div class="exam-box"><div><span>Organização</span><strong>${esc(c.exam.board)}</strong></div><div><span>Questões</span><strong>${c.exam.questions}</strong></div><div><span>Duração</span><strong>${esc(c.exam.duration)}</strong></div><div><span>Conteúdo</span><strong>${disciplines.length} disciplinas · ${c.units.length} módulos</strong></div></div></aside></div></section>`;
+      errorStats = window.VERSA_ADAPTIVE_ENGINE.errorSummary(p),
+      pace = window.VERSA_ADAPTIVE_ENGINE.paceSummary(c, p);
+    const planRows = plan.blocks.map((block,index) => `<button class="daily-item plan-${block.type}" ${block.lessonId ? `data-lesson="${block.lessonId}"` : block.simType ? `data-quick-sim="${block.simType}"` : `data-view="${block.view}"`}><b>${index + 1}</b><div><strong>${esc(block.label)} — ${esc(block.title)}</strong><small>${block.minutes} min · ${esc(block.reason)}</small></div><em>→</em></button>`).join("");
+    return `<section><div class="hero"><div class="hero-main"><span class="badge">${c.icon} ${esc(c.status)}</span><h1>${esc(c.name)}</h1><h2>${esc(c.subtitle)}</h2><p>${esc(c.description)}</p><div class="adaptive-callout"><span>MAESTRIA DE HOJE</span><strong>${esc(priority.title)}</strong><small>${errorStats.conviction ? `${errorStats.conviction} erro${errorStats.conviction>1?"s":""} convicto${errorStats.conviction>1?"s":""} em prioridade. ` : ""}Plano calculado por retenção, confiança, erros e progressão.</small></div><div class="hero-actions"><button class="primary" data-start-smart-session="30">Estudar agora — 30 min →</button><button class="secondary" data-lesson="${priority.id}">Abrir prioridade</button><button class="secondary" data-view="path">Trilha completa</button></div></div><div class="hero-side"><span>ÍNDICE DE MAESTRIA</span><strong>${mastery.score}%</strong><p>${mastery.counts.mastered} consolidadas · ${mastery.counts.consolidating} recuperáveis · retenção ${mastery.retention}%</p><button class="secondary" data-view="performance">Ver análise completa</button></div></div><div class="metrics">${metric("Revisões de hoje", due + fcDue, `${due} lições · ${fcDue} flashcards`)}${metric("Erros convictos", errorStats.conviction, "prioridade máxima")}${metric("Conteúdos consolidados", mastery.counts.mastered, "confirmação espaçada")}${metric("Ritmo médio", pace.avgSeconds ? pace.avgSeconds + "s" : "—", "por questão respondida")}</div><div class="dashboard-grid"><article class="panel"><div class="panel-head"><div><span class="eyebrow">SESSÃO PERSONALIZADA</span><h2>Seu estudo de hoje</h2></div><span class="badge">${plan.totalMinutes} min</span></div><div class="daily-list">${planRows}</div><div class="session-shortcuts"><button class="secondary" data-start-smart-session="20">20 min</button><button class="secondary" data-start-smart-session="30">30 min</button><button class="secondary" data-start-smart-session="45">45 min</button><button class="secondary" data-start-smart-session="60">60 min</button></div><p class="adaptive-method">A sessão é montada localmente e intercala revisão, ponto fraco, conteúdo novo e recuperação ativa.</p></article><aside class="panel"><div class="panel-head"><div><span class="eyebrow">ESTRUTURA</span><h2>${esc(c.exam.note)}</h2></div></div><div class="exam-box"><div><span>Organização</span><strong>${esc(c.exam.board)}</strong></div><div><span>Questões</span><strong>${c.exam.questions}</strong></div><div><span>Duração</span><strong>${esc(c.exam.duration)}</strong></div><div><span>Conteúdo</span><strong>${disciplines.length} disciplinas · ${c.units.length} módulos</strong></div></div></aside></div></section>`;
   }
-
+  function startSmartSession(minutes = 30) {
+    const c = course(), p = progress(), plan = window.VERSA_ADAPTIVE_ENGINE.buildDailyPlan(c, p, Number(minutes) || 30);
+    state.smartSession = { courseId: c.id, startedAt: Date.now(), plan, completed: [], currentIndex: null };
+    state.view = "studySession";
+    render();
+  }
+  function studySession() {
+    const c = course();
+    if (!state.smartSession || state.smartSession.courseId !== c.id) {
+      state.smartSession = { courseId:c.id, startedAt:Date.now(), plan:window.VERSA_ADAPTIVE_ENGINE.buildDailyPlan(c,progress(),30), completed:[], currentIndex:null };
+    }
+    const session = state.smartSession, completed = new Set(session.completed), doneMinutes = session.plan.blocks.reduce((sum,block,index)=>sum+(completed.has(index)?block.minutes:0),0);
+    const rows = session.plan.blocks.map((block,index)=>`<article class="session-step ${completed.has(index)?"done":""}"><b>${completed.has(index)?"✓":index+1}</b><div><span>${esc(block.label)}</span><strong>${esc(block.title)}</strong><small>${block.minutes} min · ${esc(block.reason)}</small></div><div class="session-step-actions">${completed.has(index)?'<span class="badge">Concluída</span>':`<button class="primary" data-session-open="${index}">Começar</button><button class="ghost" data-session-done="${index}">Marcar feita</button>`}</div></article>`).join("");
+    return `<section><div class="page-head"><div><span class="eyebrow">SESSÃO GUIADA</span><h1>Estudar agora — ${session.plan.totalMinutes} min</h1><p>O Versa já decidiu a ordem. Você só executa uma etapa de cada vez.</p></div><span class="badge">${doneMinutes}/${session.plan.totalMinutes} min concluídos</span></div><div class="progress session-progress"><i style="width:${Math.round(doneMinutes/session.plan.totalMinutes*100)}%"></i></div><div class="session-list">${rows}</div>${completed.size === session.plan.blocks.length ? `<div class="session-complete"><strong>Sessão concluída 🎯</strong><p>Você combinou recuperação, espaçamento e prática intercalada sem precisar escolher manualmente o próximo passo.</p><button class="primary" id="session-finish">Voltar ao início</button></div>` : `<p class="muted">A sessão é um guia flexível. Você pode sair e voltar sem perder o progresso desta sessão enquanto a página permanecer aberta.</p>`}</section>`;
+  }
+  function bindStudySession() {
+    $$('[data-session-open]').forEach((b)=>b.onclick=()=>{
+      const index=Number(b.dataset.sessionOpen), block=state.smartSession.plan.blocks[index];
+      state.smartSession.currentIndex=index;
+      if(block.lessonId) openLesson(block.lessonId);
+      else if(block.simType) startSim(block.simType);
+      else if(block.view){ state.view=block.view; render(); }
+    });
+    $$('[data-session-done]').forEach((b)=>b.onclick=()=>{
+      const index=Number(b.dataset.sessionDone);
+      if(!state.smartSession.completed.includes(index)) state.smartSession.completed.push(index);
+      render();
+    });
+    $('#session-finish')?.addEventListener('click',()=>{ state.smartSession=null; state.view='dashboard'; render(); });
+  }
   function lessonVideos(c, l) {
     return (l.videoIds || [])
       .map((id) => (c.videoCatalog || []).find((v) => v.id === id))
@@ -26391,8 +26477,9 @@
                 .map((id) => c.lessons.find((x) => x.id === id)?.title)
                 .filter(Boolean),
               vc = lessonVideos(c, l).length,
+              hasVisual = c.id === "dataprev" && Boolean(window.VERSA_DATAPREV_VISUALS?.[l.id]),
               mastery = window.VERSA_ADAPTIVE_ENGINE.lessonMastery(c, p, l);
-            return `<button class="lesson-card ${done ? "done" : ""} mastery-${mastery.status}" data-lesson="${l.id}"><b class="lesson-state">${mastery.status === "mastered" ? "✓" : done ? "↻" : l.order}</b><span><strong>${esc(l.title)}</strong><small>${esc(l.objective)}${pre.length ? ` · Pré: ${esc(pre[0])}` : ""}${vc ? ` · <span class="video-count">▶ ${vc} vídeo${vc > 1 ? "s" : ""}</span>` : ""}</small></span><span class="mastery-badge">${esc(mastery.label)}${mastery.status !== "not-started" ? ` · ${mastery.score}%` : ""}</span><em>${l.duration} min</em></button>`;
+            return `<button class="lesson-card ${done ? "done" : ""} mastery-${mastery.status}" data-lesson="${l.id}"><b class="lesson-state">${mastery.status === "mastered" ? "✓" : done ? "↻" : l.order}</b><span><strong>${esc(l.title)}</strong><small>${esc(l.objective)}${pre.length ? ` · Pré: ${esc(pre[0])}` : ""}${vc ? ` · <span class="video-count">▶ ${vc} vídeo${vc > 1 ? "s" : ""}</span>` : ""}${hasVisual ? ` · <span class="visual-count">◉ visual</span>` : ""}</small></span><span class="mastery-badge">${esc(mastery.label)}${mastery.status !== "not-started" ? ` · ${mastery.score}%` : ""}</span><em>${l.duration} min</em></button>`;
           })
           .join("")}</div></article>`;
       })
@@ -26402,9 +26489,89 @@
     state.lessonId = id;
     state.selected = {};
     state.answered = {};
+    state.confidence = {};
+    state.questionStarted = {};
+    state.lessonPrep = { skipped: false, selected: null, confidence: null, startedAt: Date.now() };
+    state.recallReveal = false;
+    state.recallDraft = "";
+    state.recallRating = null;
     state.view = "lesson";
     scrollTo(0, 0);
     render();
+  }
+  function lessonPretestQuestion(c, l) {
+    return (l.questionIds || [])
+      .map((id) => c.questions.find((q) => q.id === id))
+      .find((q) => q && !q.historical) ||
+      c.questions.find((q) => q.lessonId === l.id && !q.historical) ||
+      c.questions.find((q) => q.lessonId === l.id) || null;
+  }
+  function pretestGate(c, l, p) {
+    const q = lessonPretestQuestion(c, l);
+    if (!q) return "";
+    const selected = state.lessonPrep.selected;
+    const confidence = state.lessonPrep.confidence;
+    return `<section class="lesson-shell pretest-shell"><div class="lesson-nav"><button class="ghost" data-view="path">← Voltar à trilha</button><span class="badge">Pré-teste · 1 questão</span></div><article class="pretest-card"><span class="eyebrow">ANTES DE ESTUDAR</span><h1>Descubra o que seu cérebro já consegue recuperar</h1><p class="muted">Responder antes da explicação cria um ponto de comparação real. Errar aqui é útil: o pré-teste não reduz sua nota nem seu domínio.</p><h2>${esc(q.statement)}</h2>${questionExtras(c, q)}<div class="options">${q.options.map((o, i) => `<button class="option ${selected === i ? "selected" : ""}" data-pretest-opt="${i}"><b class="letter">${q.board === "CEBRASPE" ? ["C", "E"][i] : String.fromCharCode(65 + i)}</b><span>${esc(o)}</span></button>`).join("")}</div><div class="confidence-box"><strong>Quão certo você está?</strong><div class="confidence-options">${Object.entries(window.VERSA_ADAPTIVE_ENGINE.confidence).map(([key, item]) => `<button class="confidence-btn ${confidence === key ? "active" : ""}" data-pretest-confidence="${key}">${esc(item.label)}</button>`).join("")}</div></div><div class="pretest-actions"><button class="ghost" id="pretest-skip">Pular pré-teste</button><button class="primary" id="pretest-submit" ${selected === null || !confidence ? "disabled" : ""}>Registrar e começar a aula →</button></div></article></section>`;
+  }
+  function dataprevVisualNode(item, index) {
+    return `<div class="dv-node" data-visual-index="${index}"><span class="dv-icon">${esc(item.icon || String(index + 1))}</span><strong>${esc(item.label || item.title || "")}</strong>${item.sub || item.note ? `<small>${esc(item.sub || item.note)}</small>` : ""}</div>`;
+  }
+  function dataprevVisualDiagram(v) {
+    const items = Array.isArray(v.items) ? v.items : [];
+    if (v.type === "flow") {
+      return `<div class="dv-flow">${items.map((item, i) => `${dataprevVisualNode(item, i)}${i < items.length - 1 ? '<span class="dv-link" aria-hidden="true"><i></i><i></i><i></i><b>→</b></span>' : ""}`).join("")}</div>`;
+    }
+    if (["hub", "switch", "ap"].includes(v.type)) {
+      return `<div class="dv-network dv-network-${esc(v.type)}">${items.map((item, i) => dataprevVisualNode(item, i)).join("")}</div>`;
+    }
+    if (v.type === "compare") {
+      return `<div class="dv-compare">${items.map((col, i) => `<div class="dv-compare-card" data-visual-index="${i}"><span class="dv-icon">${esc(col.icon || String(i + 1))}</span><strong>${esc(col.title)}</strong><ul>${(col.items || []).map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`).join("")}</div>`;
+    }
+    if (v.type === "topology") {
+      return `<div class="dv-topologies">${items.map((item, i) => `<div class="dv-topology-card" data-visual-index="${i}"><div class="dv-topology dv-topology-${esc(item.kind)}" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b><em></em></div><strong>${esc(item.title)}</strong><small>${esc(item.note || "")}</small></div>`).join("")}</div>`;
+    }
+    if (v.type === "stack") {
+      return `<div class="dv-stack">${items.map((item, i) => `<div class="dv-layer" data-visual-index="${i}"><b>${esc(item.label)}</b>${item.sub ? `<span>${esc(item.sub)}</span>` : ""}</div>`).join("")}</div>`;
+    }
+    if (v.type === "packet") {
+      return `<div class="dv-packet">${items.map((item, i) => `<div class="dv-packet-field ${item.wide ? "wide" : ""} ${item.tone === "accent" ? "accent" : ""}" data-visual-index="${i}">${esc(item.label)}</div>`).join("")}</div>`;
+    }
+    if (v.type === "grid") {
+      return `<div class="dv-grid">${items.map((item, i) => `<div class="dv-grid-card" data-visual-index="${i}"><span class="dv-icon">${esc(item.icon || String(i + 1))}</span><strong>${esc(item.title)}</strong><small>${esc(item.note || "")}</small></div>`).join("")}</div>`;
+    }
+    if (v.type === "timeline") {
+      return `<div class="dv-timeline">${items.map((item, i) => `<div class="dv-stage" data-visual-index="${i}"><span>${i + 1}</span><div><strong>${esc(item.label)}</strong>${item.sub ? `<small>${esc(item.sub)}</small>` : ""}</div></div>`).join("")}</div>`;
+    }
+    if (v.type === "mapping") {
+      return `<div class="dv-mapping"><div class="dv-map-head"><strong>OSI</strong><strong>TCP/IP</strong></div>${items.map((item, i) => `<div class="dv-map-row" data-visual-index="${i}"><span>${esc(item.left)}</span><b aria-hidden="true">→</b><span>${esc(item.right)}</span></div>`).join("")}</div>`;
+    }
+    if (v.type === "address") {
+      return `<div class="dv-address">${items.map((item, i) => `<div class="dv-address-part" data-visual-index="${i}"><strong>${esc(item.label)}</strong><small>${esc(item.bits || "")}</small></div>`).join("")}</div>`;
+    }
+    if (v.type === "split") {
+      return `<div class="dv-split">${items.map((item, i) => `<div class="dv-split-part dv-grow-${Math.max(1, Math.min(4, Number(item.size) || 1))}" data-visual-index="${i}"><small>${esc(item.role || "")}</small><strong>${esc(item.label)}</strong></div>`).join("")}</div>`;
+    }
+    if (v.type === "table") {
+      const table = items[0] || { cols: [], rows: [] };
+      return `<div class="dv-table-wrap" data-visual-index="0"><table class="dv-table"><thead><tr>${(table.cols || []).map((x) => `<th>${esc(x)}</th>`).join("")}</tr></thead><tbody>${(table.rows || []).map((row) => `<tr>${row.map((x) => `<td>${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+    }
+    if (v.type === "bars") {
+      return `<div class="dv-bars">${items.map((item, i) => `<div class="dv-bar" data-visual-index="${i}"><div><strong>${esc(item.label)}</strong><span>${Number(item.value) || 0}%</span></div><div class="dv-bar-track"><i style="width:${Math.max(0, Math.min(100, Number(item.value) || 0))}%"></i></div></div>`).join("")}</div>`;
+    }
+    if (v.type === "triangle") {
+      return `<div class="dv-triangle">${items.map((item, i) => `<div class="dv-triangle-node" data-visual-index="${i}"><span>${esc(item.icon || "")}</span><strong>${esc(item.label)}</strong></div>`).join("")}<div class="dv-triangle-core">CIA</div></div>${Array.isArray(v.satellites) ? `<div class="dv-satellites">${v.satellites.map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : ""}`;
+    }
+    if (v.type === "cycle") {
+      return `<div class="dv-cycle">${items.map((item, i) => `<div class="dv-cycle-node" data-visual-index="${i}"><span>${esc(item.icon || String(i + 1))}</span><strong>${esc(item.label)}</strong></div>${i < items.length - 1 ? '<b class="dv-cycle-arrow" aria-hidden="true">↻</b>' : ""}`).join("")}</div>`;
+    }
+    return `<div class="dv-flow">${items.map((item, i) => dataprevVisualNode(item, i)).join("")}</div>`;
+  }
+  function dataprevVisualSection(c, l) {
+    if (c.id !== "dataprev") return "";
+    const v = window.VERSA_DATAPREV_VISUALS?.[l.id];
+    if (!v) return "";
+    const steps = Array.isArray(v.steps) ? v.steps : [];
+    return `<div class="dataprev-visual" data-active-step="-1"><span class="eyebrow">DEMONSTRAÇÃO VISUAL</span><div class="dv-heading"><div><h2>${esc(v.title)}</h2><p>${esc(v.caption)}</p></div><span class="dv-reference">◉ Visual guiado</span></div><div class="dv-canvas">${dataprevVisualDiagram(v)}</div>${steps.length ? `<div class="dv-guide"><strong>Explore o desenho</strong><div class="dv-step-buttons">${steps.map((text, i) => `<button type="button" class="visual-step" data-visual-step="${i}" data-visual-text="${esc(text)}"><span>${i + 1}</span>${esc(text)}</button>`).join("")}</div><div class="dv-step-detail" aria-live="polite">Clique em uma etapa para destacar o que observar no desenho.</div></div>` : ""}</div>`;
   }
   function lessonPage() {
     const c = course(),
@@ -26417,91 +26584,186 @@
         .map((id) => c.lessons.find((x) => x.id === id))
         .filter(Boolean),
       vids = lessonVideos(c, l),
-      mastery = window.VERSA_ADAPTIVE_ENGINE.lessonMastery(c, p, l);
-    return `<section class="lesson-shell"><div class="lesson-nav"><button class="ghost" data-view="path">← Voltar à trilha</button><span class="badge">${esc(mastery.label)}${mastery.status !== "not-started" ? ` · ${mastery.score}%` : ""}</span></div><div class="lesson-hero"><span class="eyebrow">${esc(c.units.find((u) => u.id === l.unitId)?.title || "LIÇÃO")}</span><h1>${esc(l.title)}</h1><p>${esc(l.objective)}</p><div class="lesson-meta"><span>◷ ${l.duration} min</span><span>${esc(l.difficulty)}</span>${l.tags.map((t) => `<span>${esc(t)}</span>`).join("")}${vids.length ? `<span class="video-count">▶ ${vids.length} videoaula${vids.length > 1 ? "s" : ""}</span>` : ""}</div></div>${pre.length ? `<article class="lesson-section"><span class="eyebrow">PRÉ-REQUISITOS</span><h2>Base recomendada</h2><p>Esta lição se conecta a: ${pre.map((x) => `<strong>${esc(x.title)}</strong>`).join(", ")}. Você pode continuar livremente e retornar à base sempre que necessário.</p></article>` : ""}<article class="lesson-section"><h2>Entenda o conceito</h2><p>${esc(l.summary)}</p><ul class="key-list">${l.points.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></article><article class="lesson-section"><h2>Exemplo aplicado</h2><p>${esc(l.example)}</p></article>${vids.length ? `<article class="lesson-section"><span class="eyebrow">VIDEOAULAS COMPLEMENTARES</span><h2>Veja o conceito por outra explicação</h2><p class="muted">As aulas foram selecionadas por aderência ao Anexo II, clareza e nível de profundidade. O texto e os exercícios da trilha continuam sendo a base obrigatória.</p><div class="video-grid">${vids.map(videoCard).join("")}</div><div class="video-note">As thumbnails dos vídeos diretos são carregadas do YouTube com política de não envio do endereço de origem. Vídeos, playlists, coleções e buscas só são abertos após o clique.</div></article>` : ""}<article class="lesson-section recall"><span class="eyebrow">RECUPERAÇÃO ATIVA</span><h2>Feche o material por alguns segundos</h2><p>${esc(l.recall)}</p></article>${qs.map((q, i) => quizBlock(q, i)).join("")}<div class="lesson-footer"><button class="secondary" data-view="path">Voltar à trilha</button><button class="primary" id="finish-lesson" ${qs.every((q) => state.answered[q.id]) ? "" : "disabled"}>${p.completed.includes(l.id) ? "Reforçar e agendar revisão" : "Concluir lição e agendar revisão"} →</button></div></section>`;
+      mastery = window.VERSA_ADAPTIVE_ENGINE.lessonMastery(c, p, l),
+      pretest = p.pretests[l.id];
+    if (!pretest && !state.lessonPrep.skipped) return pretestGate(c, l, p);
+    const delta = pretest
+      ? `<div class="learning-delta"><span>PRÉ-TESTE</span><strong>${pretest.skipped ? "Pulado" : pretest.correct ? "Acertou" : "Errou"}</strong><small>${pretest.skipped ? "Você pode usar a recuperação aberta abaixo como ponto de partida." : p.completed.includes(l.id) ? `Pós-estudo: ${Math.round(p.adaptive.lessonReviews?.[l.id]?.lastScore ?? p.scores[l.id] ?? 0)}%` : "O resultado pós-estudo aparecerá após concluir a lição."}</small></div>`
+      : "";
+    const recallRecord = p.recall[l.id];
+    const recallReveal = state.recallReveal || Boolean(recallRecord);
+    return `<section class="lesson-shell"><div class="lesson-nav"><button class="ghost" data-view="path">← Voltar à trilha</button><span class="badge">${esc(mastery.label)}${mastery.status !== "not-started" ? ` · ${mastery.score}%` : ""}</span></div><div class="lesson-hero"><span class="eyebrow">${esc(c.units.find((u) => u.id === l.unitId)?.title || "LIÇÃO")}</span><h1>${esc(l.title)}</h1><p>${esc(l.objective)}</p><div class="lesson-meta"><span>◷ ${l.duration} min</span><span>${esc(l.difficulty)}</span>${l.tags.map((t) => `<span>${esc(t)}</span>`).join("")}${vids.length ? `<span class="video-count">▶ ${vids.length} videoaula${vids.length > 1 ? "s" : ""}</span>` : ""}${c.id === "dataprev" && window.VERSA_DATAPREV_VISUALS?.[l.id] ? `<span class="visual-count">◉ demonstrativo visual</span>` : ""}</div>${delta}</div>${pre.length ? `<article class="lesson-section"><span class="eyebrow">PRÉ-REQUISITOS</span><h2>Base recomendada</h2><p>Esta lição se conecta a: ${pre.map((x) => `<strong>${esc(x.title)}</strong>`).join(", ")}. Você pode continuar livremente e retornar à base sempre que necessário.</p></article>` : ""}<article class="lesson-section"><h2>Entenda o conceito</h2><p>${esc(l.summary)}</p>${dataprevVisualSection(c, l)}<ul class="key-list">${l.points.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></article><article class="lesson-section"><h2>Exemplo aplicado</h2><p>${esc(l.example)}</p></article>${vids.length ? `<article class="lesson-section"><span class="eyebrow">VIDEOAULAS COMPLEMENTARES</span><h2>Veja o conceito por outra explicação</h2><p class="muted">As aulas foram selecionadas por aderência ao conteúdo, clareza e profundidade. O texto e os exercícios da trilha continuam sendo a base obrigatória.</p><div class="video-grid">${vids.map(videoCard).join("")}</div><div class="video-note">As thumbnails dos vídeos diretos são carregadas do YouTube com política de não envio do endereço de origem. Vídeos, playlists e coleções só são abertos após o clique.</div></article>` : ""}<article class="lesson-section recall mastery-recall"><span class="eyebrow">RECUPERAÇÃO ATIVA</span><h2>Responda antes de rever o material</h2><p>${esc(l.recall)}</p><textarea id="recall-draft" maxlength="500" rows="4" placeholder="Escreva com suas palavras. Este texto não é salvo.">${esc(state.recallDraft || "")}</textarea>${!recallReveal ? `<button class="secondary" id="recall-reveal">Registrei minha resposta · revelar pontos-chave</button>` : `<div class="recall-key"><strong>Pontos-chave para autocorreção</strong><ul>${l.points.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div><div class="recall-rating"><strong>Como foi lembrar sem consultar?</strong><button data-recall-rating="again">Não lembrei</button><button data-recall-rating="partial">Lembrei parcialmente</button><button data-recall-rating="good">Lembrei bem</button>${recallRecord ? `<small>Última autoavaliação registrada: ${recallRecord.rating === "good" ? "lembrei bem" : recallRecord.rating === "partial" ? "parcial" : "não lembrei"}.</small>` : ""}</div>`}</article>${qs.map((q, i) => quizBlock(q, i)).join("")}<div class="lesson-footer"><button class="secondary" data-view="path">Voltar à trilha</button><button class="primary" id="finish-lesson" ${qs.every((q) => state.answered[q.id]) ? "" : "disabled"}>${p.completed.includes(l.id) ? "Reforçar e agendar revisão" : "Concluir lição e agendar revisão"} →</button></div></section>`;
   }
   function questionExtras(c, q) {
     const tb = q.textBaseId && c.textBases && c.textBases[q.textBaseId],
       image = safeAssetPath(q.image);
     return `${tb ? `<div class="question-context"><strong>📄 ${esc(tb.title)}</strong><p>${esc(tb.text)}</p></div>` : ""}${image ? `<div class="question-media"><img loading="lazy" src="${esc(image)}" alt="Figura da questão ${esc(q.id)}"></div>` : ""}${q.sourceProof ? `<small class="question-source">Prova histórica: ${esc(q.sourceProof)} · ${esc(q.sourceStatus || "origem institucional em conferência")}</small>` : ""}`;
   }
+  function alternativeFeedback(q, index) {
+    if (index === q.correct) return q.explanation || "Esta é a alternativa correta.";
+    if (q.wrong && q.wrong[index]) return q.wrong[index];
+    return "Esta alternativa não corresponde ao conceito central cobrado. Compare-a com a explicação da resposta correta.";
+  }
   function quizBlock(q, i) {
     const sel = state.selected[q.id],
       ans = state.answered[q.id],
+      confidence = state.confidence[q.id],
       c = course(),
-      feedbackText =
-        ans && sel !== q.correct && q.wrong?.[sel]
-          ? q.wrong[sel]
-          : q.explanation;
-    return `<article class="quiz-card"><span class="eyebrow">QUESTÃO ${i + 1} · ${esc(q.topic)}</span><h3>${esc(q.statement)}</h3>${questionExtras(c, q)}<div class="options">${q.options
-      .map((o, j) => {
-        let cls = sel === j ? "selected " : "";
-        if (ans) {
-          if (j === q.correct) cls += "correct";
-          else if (j === sel) cls += "wrong";
-        }
-        return `<button class="option ${cls}" data-q="${q.id}" data-opt="${j}" ${ans ? "disabled" : ""}><b class="letter">${q.board === "CEBRASPE" ? ["C", "E"][j] : String.fromCharCode(65 + j)}</b><span>${esc(o)}</span></button>`;
-      })
-      .join(
-        "",
-      )}</div><button class="primary" data-submit="${q.id}" ${sel === undefined || ans ? "disabled" : ""} style="margin-top:12px">Corrigir resposta</button>${ans ? `<div class="feedback"><strong>${sel === q.correct ? "Resposta correta." : "Resposta incorreta."}</strong><br>${esc(feedbackText)}${sel !== q.correct && feedbackText !== q.explanation ? `<details><summary>Ver explicação geral</summary><p>${esc(q.explanation)}</p></details>` : ""}</div>` : ""}</article>`;
+      feedbackText = ans && sel !== q.correct && q.wrong?.[sel] ? q.wrong[sel] : q.explanation;
+    return `<article class="quiz-card" data-quiz-card="${q.id}"><span class="eyebrow">QUESTÃO ${i + 1} · ${esc(q.topic)}</span><h3>${esc(q.statement)}</h3>${questionExtras(c, q)}<div class="options">${q.options.map((o, j) => {
+      let cls = sel === j ? "selected " : "";
+      if (ans) {
+        if (j === q.correct) cls += "correct";
+        else if (j === sel) cls += "wrong";
+      }
+      return `<button class="option ${cls}" data-q="${q.id}" data-opt="${j}" ${ans ? "disabled" : ""}><b class="letter">${q.board === "CEBRASPE" ? ["C", "E"][j] : String.fromCharCode(65 + j)}</b><span>${esc(o)}</span></button>`;
+    }).join("")}</div>${!ans ? `<div class="confidence-box"><strong>Antes de corrigir: quão certo você está?</strong><div class="confidence-options">${Object.entries(window.VERSA_ADAPTIVE_ENGINE.confidence).map(([key, item]) => `<button class="confidence-btn ${confidence === key ? "active" : ""}" data-confidence-q="${q.id}" data-confidence="${key}">${esc(item.label)}</button>`).join("")}</div></div>` : ""}<button class="primary" data-submit="${q.id}" ${sel === undefined || ans || !confidence ? "disabled" : ""} style="margin-top:12px">Corrigir resposta</button>${ans ? `<div class="feedback"><strong>${sel === q.correct ? "Resposta correta." : "Resposta incorreta."}</strong><br>${esc(feedbackText)}${sel !== q.correct ? `<div class="error-classifier"><strong>O que mais explica este erro?</strong>${Object.entries(window.VERSA_ADAPTIVE_ENGINE.errorTypes).filter(([key]) => key !== "erro-convicto").map(([key, label]) => `<button data-error-category="${key}" data-error-question="${q.sourceId || q.id}">${esc(label)}</button>`).join("")}</div>` : ""}<details class="alternatives-review"><summary>Entender alternativa por alternativa</summary>${q.options.map((option, j) => `<div class="alternative-explain ${j === q.correct ? "is-correct" : ""}"><b>${q.board === "CEBRASPE" ? ["C", "E"][j] : String.fromCharCode(65 + j)}</b><span><strong>${esc(option)}</strong><small>${esc(alternativeFeedback(q, j))}</small></span></div>`).join("")}</details></div>` : ""}</article>`;
   }
   function bindLesson() {
-    $$("[data-q]").forEach(
-      (b) =>
-        (b.onclick = () => {
-          state.selected[b.dataset.q] = Number(b.dataset.opt);
-          render();
-        }),
-    );
-    $$("[data-submit]").forEach(
-      (b) =>
-        (b.onclick = () => {
-          const c = course(),
-            q = c.questions.find((x) => x.id === b.dataset.submit),
-            sel = state.selected[q.id],
-            p = progress();
-          state.answered[q.id] = true;
-          recordQuestionAttempt(p, q, sel, "lesson");
-          saveProgress(p);
-          render();
-        }),
-    );
-    $("#finish-lesson")?.addEventListener("click", () => {
-      const c = course(),
-        l = c.lessons.find((x) => x.id === state.lessonId),
-        p = progress(),
-        qs = l.questionIds.map((id) => c.questions.find((q) => q.id === id)),
-        score = Math.round(
-          (qs.filter((q) => state.selected[q.id] === q.correct).length /
-            qs.length) *
-            100,
-        );
+    const c = course(),
+      l = c.lessons.find((x) => x.id === state.lessonId) || c.lessons[0],
+      pNow = progress();
+    if (!pNow.pretests[l.id] && !state.lessonPrep.skipped) {
+      $$('[data-pretest-opt]').forEach((b) => b.onclick = () => {
+        state.lessonPrep.selected = Number(b.dataset.pretestOpt);
+        render();
+      });
+      $$('[data-pretest-confidence]').forEach((b) => b.onclick = () => {
+        state.lessonPrep.confidence = b.dataset.pretestConfidence;
+        render();
+      });
+      $('#pretest-skip')?.addEventListener('click', () => {
+        const p = progress();
+        p.pretests[l.id] = { skipped: true, date: today(), questionId: "", selected: null, correct: false, confidence: null };
+        saveProgress(p);
+        state.lessonPrep.skipped = true;
+        render();
+      });
+      $('#pretest-submit')?.addEventListener('click', () => {
+        const p = progress(), q = lessonPretestQuestion(c, l);
+        if (!q || state.lessonPrep.selected === null || !state.lessonPrep.confidence) return;
+        const responseMs = Date.now() - (state.lessonPrep.startedAt || Date.now());
+        const correct = recordQuestionAttempt(p, q, state.lessonPrep.selected, 'pretest', {
+          confidence: state.lessonPrep.confidence,
+          responseMs,
+        });
+        p.pretests[l.id] = {
+          questionId: q.id,
+          selected: state.lessonPrep.selected,
+          correct,
+          date: today(),
+          confidence: state.lessonPrep.confidence,
+        };
+        saveProgress(p);
+        render();
+      });
+      return;
+    }
+    $$('[data-visual-step]').forEach((b) => b.onclick = () => {
+      const card = b.closest('.dataprev-visual');
+      if (!card) return;
+      const index = Number(b.dataset.visualStep || 0);
+      card.dataset.activeStep = String(index);
+      card.querySelectorAll('[data-visual-step]').forEach((x) => x.classList.toggle('active', x === b));
+      const targets = card.querySelectorAll('[data-visual-index]');
+      targets.forEach((x, i) => x.classList.toggle('visual-active', targets.length ? i === index % targets.length : false));
+      const detail = card.querySelector('.dv-step-detail');
+      if (detail) detail.textContent = b.dataset.visualText || '';
+    });
+    $$('[data-q]').forEach((b) => b.onclick = () => {
+      state.selected[b.dataset.q] = Number(b.dataset.opt);
+      render();
+    });
+    $$('[data-confidence-q]').forEach((b) => b.onclick = () => {
+      state.confidence[b.dataset.confidenceQ] = b.dataset.confidence;
+      render();
+    });
+    $$('[data-submit]').forEach((b) => b.onclick = () => {
+      const q = c.questions.find((x) => x.id === b.dataset.submit),
+        sel = state.selected[q.id], p = progress(),
+        started = state.questionStarted[q.id] || Date.now(),
+        responseMs = Date.now() - started;
+      state.answered[q.id] = true;
+      recordQuestionAttempt(p, q, sel, 'lesson', {
+        confidence: state.confidence[q.id],
+        responseMs,
+        recallUsed: Boolean(p.recall[l.id] || state.recallReveal),
+      });
+      saveProgress(p);
+      render();
+    });
+    $$('[data-error-category]').forEach((b) => b.onclick = () => {
+      const p = progress();
+      setErrorCategory(p, b.dataset.errorQuestion, b.dataset.errorCategory);
+      saveProgress(p);
+      render();
+    });
+    const recallDraft = $('#recall-draft');
+    if (recallDraft) {
+      recallDraft.addEventListener('input', (event) => {
+        // Mantém a tentativa apenas na memória da sessão. Não é gravada no localStorage.
+        state.recallDraft = event.target.value;
+      });
+    }
+    $('#recall-reveal')?.addEventListener('click', () => {
+      if (recallDraft) state.recallDraft = recallDraft.value;
+      state.recallReveal = true;
+      render();
+    });
+    $$('[data-recall-rating]').forEach((b) => b.onclick = () => {
+      const p = progress(), previous = p.recall[l.id] || { attempts: 0 };
+      p.recall[l.id] = { rating: b.dataset.recallRating, date: today(), attempts: (previous.attempts || 0) + 1 };
+      if (b.dataset.recallRating === 'again') scheduleLessonReview(p, l.id, Math.min(55, p.scores[l.id] || 50));
+      saveProgress(p);
+      state.recallRating = b.dataset.recallRating;
+      render();
+    });
+    // Marca o primeiro momento em que cada questão realmente entra no campo visual.
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = entry.target.dataset.quizCard;
+            if (id && !state.questionStarted[id]) state.questionStarted[id] = Date.now();
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.35 });
+      $$('[data-quiz-card]').forEach((card) => observer.observe(card));
+    } else {
+      $$('[data-quiz-card]').forEach((card) => {
+        if (!state.questionStarted[card.dataset.quizCard]) state.questionStarted[card.dataset.quizCard] = Date.now();
+      });
+    }
+    $('#finish-lesson')?.addEventListener('click', () => {
+      const p = progress(),
+        qs = l.questionIds.map((id) => c.questions.find((q) => q.id === id)).filter(Boolean),
+        score = Math.round((qs.filter((q) => state.selected[q.id] === q.correct).length / Math.max(qs.length, 1)) * 100);
       if (!p.completed.includes(l.id)) p.completed.push(l.id);
       p.scores[l.id] = Math.max(p.scores[l.id] || 0, score);
       p.xp += 20 + Math.round(score / 10);
       scheduleLessonReview(p, l.id, score);
       saveProgress(p);
-      state.view = "path";
+      if (state.smartSession && Number.isInteger(state.smartSession.currentIndex)) {
+        if (!state.smartSession.completed.includes(state.smartSession.currentIndex)) state.smartSession.completed.push(state.smartSession.currentIndex);
+        state.smartSession.currentIndex = null;
+        state.view = 'studySession';
+      } else state.view = 'path';
       render();
     });
   }
   function reviews() {
-    const c = course(),
-      p = progress(),
-      items = p.reviews.slice().sort((a, b) => a.due.localeCompare(b.due));
-    return `<section><div class="page-head"><div><span class="eyebrow">REPETIÇÃO ESPAÇADA</span><h1>Revisões</h1><p>Conteúdos reaparecem conforme seu desempenho e o tempo desde o último estudo.</p></div><span class="badge">${items.length} agendadas</span></div>${
-      items.length
-        ? `<div class="list-grid">${items
-            .map((r) => {
-              const l = c.lessons.find((x) => x.id === r.lessonId);
-              if (!l) return "";
-              const adaptive = p.adaptive.lessonReviews[l.id] || r;
-              return `<article class="review-row"><b>↻</b><div><strong>${esc(l.title)}</strong><small>${r.due <= today() ? "Revisão disponível agora" : "Agendada para " + new Date(r.due + "T12:00:00").toLocaleDateString("pt-BR")} · intervalo ${adaptive.intervalDays || 1} dia${adaptive.intervalDays === 1 ? "" : "s"} · último resultado ${adaptive.lastScore ?? p.scores[l.id] ?? 0}%</small></div><button class="secondary" data-lesson="${l.id}">Revisar</button></article>`;
-            })
-            .join("")}</div>`
-        : '<div class="empty">Conclua uma lição para criar sua primeira revisão.</div>'
-    }</section>`;
+    const c = course(), p = progress(),
+      items = p.reviews.slice().sort((a, b) => a.due.localeCompare(b.due)),
+      errors = window.VERSA_ADAPTIVE_ENGINE.errorSummary(p);
+    return `<section><div class="page-head"><div><span class="eyebrow">REPETIÇÃO ESPAÇADA + RECUPERAÇÃO</span><h1>Revisões inteligentes</h1><p>O Versa prioriza conteúdos entrando em esquecimento, erros ativos e recuperação sem consulta.</p></div><span class="badge">${items.length} agendadas · ${errors.conviction} erros convictos</span></div>${errors.conviction ? `<div class="priority-warning"><strong>⚠ ${errors.conviction} erro${errors.conviction > 1 ? "s" : ""} convicto${errors.conviction > 1 ? "s" : ""}</strong><span>Você respondeu errado com alta confiança. Esses itens recebem prioridade máxima até serem corrigidos.</span></div>` : ""}${items.length ? `<div class="list-grid">${items.map((r) => {
+      const l = c.lessons.find((x) => x.id === r.lessonId);
+      if (!l) return "";
+      const adaptive = p.adaptive.lessonReviews[l.id] || r,
+        mastery = window.VERSA_ADAPTIVE_ENGINE.lessonMastery(c, p, l),
+        conviction = p.errors.some((e) => e.lessonId === l.id && e.status !== "resolved" && e.category === "erro-convicto");
+      return `<article class="review-row ${conviction ? "conviction" : ""}"><b>${conviction ? "⚠" : "↻"}</b><div><strong>${esc(l.title)}</strong><small>${r.due <= today() ? "Revisão disponível agora" : "Agendada para " + new Date(r.due + "T12:00:00").toLocaleDateString("pt-BR")} · retenção ${mastery.retention}% · domínio ${mastery.score}%</small><span>${conviction ? "Erro convicto: revisar antes de avançar." : `Intervalo atual: ${adaptive.intervalDays || 1} dia${adaptive.intervalDays === 1 ? "" : "s"}.`}</span></div><button class="secondary" data-lesson="${l.id}">Revisar</button></article>`;
+    }).join("")}</div>` : '<div class="empty">Conclua uma lição para criar sua primeira revisão.</div>'}</section>`;
   }
   function flashFilteredCards(c = course()) {
     const filters = state.flash.filters || {},
@@ -26765,61 +27027,48 @@
   }
 
   function errors() {
-    const c = course(),
-      p = progress(),
+    const c = course(), p = progress(),
       active = p.errors.filter((error) => error.status !== "resolved"),
-      resolved = p.errors.filter((error) => error.status === "resolved");
-    const rows = (items, solved = false) => items
-      .slice()
-      .reverse()
-      .map((error) => {
-        const q = c.questions.find((question) => question.id === error.questionId),
-          lesson = c.lessons.find((item) => item.id === error.lessonId);
-        if (!q || !lesson) return "";
-        const selected = Number.isInteger(error.selected)
-          ? String.fromCharCode(65 + error.selected)
-          : "não registrada/em branco";
-        return `<article class="error-row ${solved ? "resolved" : ""}"><b>${solved ? "✓" : "!"}</b><div><strong>${esc(q.topic)} — ${esc(lesson.title)}</strong><small>${esc(q.statement)}</small><small>Marcada: ${selected} · Correta: ${String.fromCharCode(65 + q.correct)}</small><span class="error-progress">${solved ? `Superado em ${new Date(error.resolvedAt + "T12:00:00").toLocaleDateString("pt-BR")}` : `${error.recoveryStreak || 0}/2 confirmações corretas em dias diferentes`}</span></div>${solved ? '<span class="badge">Superado</span>' : `<button class="secondary" data-lesson="${lesson.id}">Reforçar</button>`}</article>`;
-      })
-      .join("");
-    return `<section><div class="page-head"><div><span class="eyebrow">CADERNO ADAPTATIVO</span><h1>Seus erros</h1><p>Um erro fica ativo até o conhecimento ser confirmado corretamente em dois dias diferentes.</p></div><span class="badge">${active.length} ativos · ${resolved.length} superados</span></div>${active.length ? `<h2>Em correção</h2><div class="list-grid">${rows(active)}</div>` : '<div class="empty">Nenhum erro ativo nesta trilha.</div>'}${resolved.length ? `<h2 class="resolved-title">Superados</h2><div class="list-grid">${rows(resolved, true)}</div>` : ""}</section>`;
+      resolved = p.errors.filter((error) => error.status === "resolved"),
+      summary = window.VERSA_ADAPTIVE_ENGINE.errorSummary(p);
+    const rows = (items, solved = false) => items.slice().reverse().map((error) => {
+      const q = c.questions.find((question) => question.id === error.questionId),
+        lesson = c.lessons.find((item) => item.id === error.lessonId);
+      if (!q || !lesson) return "";
+      const selected = Number.isInteger(error.selected) ? String.fromCharCode(65 + error.selected) : "não registrada/em branco",
+        label = window.VERSA_ADAPTIVE_ENGINE.errorTypes[error.category] || "Erro de conteúdo",
+        causeLabel = error.cause ? window.VERSA_ADAPTIVE_ENGINE.errorTypes[error.cause] : "";
+      return `<article class="error-row ${solved ? "resolved" : ""} ${error.category === "erro-convicto" ? "conviction" : ""}"><b>${solved ? "✓" : error.category === "erro-convicto" ? "⚠" : "!"}</b><div><strong>${esc(q.topic)} — ${esc(lesson.title)}</strong><small>${esc(q.statement)}</small><small>Marcada: ${selected} · Correta: ${String.fromCharCode(65 + q.correct)} · <b>${esc(label)}</b>${causeLabel ? ` · causa: ${esc(causeLabel)}` : ""}</small><span class="error-progress">${solved ? `Superado em ${new Date(error.resolvedAt + "T12:00:00").toLocaleDateString("pt-BR")}` : `${error.recoveryStreak || 0}/2 confirmações corretas em dias diferentes`}</span></div>${solved ? '<span class="badge">Superado</span>' : `<button class="secondary" data-lesson="${lesson.id}">Reforçar</button>`}</article>`;
+    }).join("");
+    const breakdown = Object.entries(summary.byType).sort((a,b)=>b[1]-a[1]).map(([key,value])=>`<div><strong>${value}</strong><span>${esc(summary.labels[key] || key)}</span></div>`).join("");
+    return `<section><div class="page-head"><div><span class="eyebrow">CADERNO DE ERROS 2.0</span><h1>Corrija a causa do erro</h1><p>O erro não é apenas repetido: ele é classificado para que o estudo ataque a causa provável.</p></div><span class="badge">${active.length} ativos · ${resolved.length} superados</span></div>${breakdown ? `<div class="error-breakdown">${breakdown}</div>` : ""}${active.length ? `<h2>Em correção</h2><div class="list-grid">${rows(active)}</div>` : '<div class="empty">Nenhum erro ativo nesta trilha.</div>'}${resolved.length ? `<h2 class="resolved-title">Superados</h2><div class="list-grid">${rows(resolved, true)}</div>` : ""}</section>`;
   }
   function performance() {
-    const c = course(),
-      p = progress(),
+    const c = course(), p = progress(),
       adaptive = window.VERSA_ADAPTIVE_ENGINE.courseMastery(c, p),
+      pace = window.VERSA_ADAPTIVE_ENGINE.paceSummary(c, p),
+      errorStats = window.VERSA_ADAPTIVE_ENGINE.errorSummary(p),
       avg = adaptive.score,
-      activeErrors = p.errors.filter((error) => error.status !== "resolved").length,
-      disciplines = [...new Set(c.units.map((u) => u.discipline || u.title))];
+      activeErrors = errorStats.total,
+      disciplines = [...new Set(c.units.map((u) => u.discipline || u.title))],
+      preRows = Object.entries(p.pretests).filter(([lessonId,item]) => !item.skipped && Number.isFinite(Number(p.adaptive.lessonReviews?.[lessonId]?.lastScore))),
+      preAvg = preRows.length ? Math.round(preRows.filter(([,item]) => item.correct).length / preRows.length * 100) : 0,
+      postAvg = preRows.length ? Math.round(preRows.reduce((sum,[lessonId]) => sum + Number(p.adaptive.lessonReviews?.[lessonId]?.lastScore || 0),0) / preRows.length) : 0,
+      learningGain = preRows.length ? postAvg - preAvg : 0;
     const scoreForLessons = (ls) => {
-      const scores = ls
-        .map((lesson) => window.VERSA_ADAPTIVE_ENGINE.lessonMastery(c, p, lesson))
-        .filter((item) => item.status !== "not-started")
-        .map((item) => item.score);
-      return scores.length
-        ? Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length)
-        : 0;
+      const scores = ls.map((lesson) => window.VERSA_ADAPTIVE_ENGINE.lessonMastery(c, p, lesson)).filter((item) => item.status !== "not-started").map((item) => item.score);
+      return scores.length ? Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length) : 0;
     };
-    return `<section><div class="page-head"><div><span class="eyebrow">ANÁLISE DE DOMÍNIO</span><h1>Desempenho em ${esc(c.shortName)}</h1><p>O painel considera desempenho, recuperação ativa, erros e prática distribuída.</p></div></div><div class="metrics">${metric("Lições concluídas", p.completed.length, "de " + c.lessons.length)}${metric("Domínio estimado", avg + "%", "somente no conteúdo estudado")}${metric("Experiência", p.xp, "pontos")}${metric("Erros ativos", activeErrors, "aguardando confirmação")}</div><div class="dashboard-grid"><article class="panel"><div class="panel-head"><div><span class="eyebrow">DOMÍNIO POR DISCIPLINA</span><h2>Visão geral</h2></div></div><div class="mastery">${disciplines
-      .map((d) => {
-        const unitIds = c.units
-            .filter((u) => (u.discipline || u.title) === d)
-            .map((u) => u.id),
-          ls = c.lessons.filter((l) => unitIds.includes(l.unitId)),
-          v = scoreForLessons(ls);
-        return `<div class="mastery-row"><div><strong>${esc(d)}</strong><span>${v}%</span></div><div class="progress"><i style="width:${v}%;background:${c.accent}"></i></div></div>`;
-      })
-      .join(
-        "",
-      )}</div><div style="border-top:1px solid var(--line);margin:22px 0"></div><span class="eyebrow">DOMÍNIO POR MÓDULO</span><div class="mastery">${c.units
-      .map((u) => {
-        const ls = c.lessons.filter((l) => l.unitId === u.id),
-          v = scoreForLessons(ls);
-        return `<div class="mastery-row"><div><strong>${esc(u.title)}</strong><span>${v}%</span></div><div class="progress"><i style="width:${v}%;background:${c.accent}"></i></div></div>`;
-      })
-      .join(
-        "",
-      )}</div></article><article class="panel"><div class="panel-head"><div><span class="eyebrow">ETAPAS E REFERÊNCIAS</span><h2>Estrutura da seleção</h2></div></div>${c.stages.length ? `<div class="stage-grid">${c.stages.map((s) => `<div class="stage-card"><b>${esc(s.title)}</b><span class="muted">${esc(s.text)}</span></div>`).join("")}</div>` : `<div class="exam-box"><div><span>Prova</span><strong>${c.exam.questions} questões</strong></div><div><span>Banca</span><strong>${esc(c.exam.board)}</strong></div></div>`}</article></div></section>`;
+    const statusCards = Object.entries(window.VERSA_ADAPTIVE_ENGINE.statuses).map(([key,item]) => `<div class="mastery-state state-${key}"><strong>${adaptive.counts[key] || 0}</strong><span>${esc(item.label)}</span></div>`).join("");
+    const paceText = pace.projectedSeconds ? fmtTime(pace.projectedSeconds) : "sem dados";
+    return `<section><div class="page-head"><div><span class="eyebrow">VERSA MASTERY ENGINE</span><h1>Desempenho em ${esc(c.shortName)}</h1><p>O painel combina precisão, retenção, confiança, ritmo, recuperação ativa e estabilidade entre sessões.</p></div></div><div class="metrics">${metric("Domínio estimado", avg + "%", "qualidade das evidências")}${metric("Retenção", adaptive.retention + "%", "confirmação em dias diferentes")}${metric("Calibração", adaptive.calibration + "%", "certeza compatível com acertos")}${metric("Erros convictos", errorStats.conviction, "prioridade máxima")}</div><div class="mastery-states">${statusCards}</div><div class="dashboard-grid"><article class="panel"><div class="panel-head"><div><span class="eyebrow">DOMÍNIO POR DISCIPLINA</span><h2>Visão geral</h2></div></div><div class="mastery">${disciplines.map((d) => {
+      const unitIds = c.units.filter((u) => (u.discipline || u.title) === d).map((u) => u.id),
+        ls = c.lessons.filter((l) => unitIds.includes(l.unitId)), v = scoreForLessons(ls);
+      return `<div class="mastery-row"><div><strong>${esc(d)}</strong><span>${v}%</span></div><div class="progress"><i style="width:${v}%;background:${c.accent}"></i></div></div>`;
+    }).join("")}</div><div style="border-top:1px solid var(--line);margin:22px 0"></div><span class="eyebrow">DOMÍNIO POR MÓDULO</span><div class="mastery">${c.units.map((u) => {
+      const ls = c.lessons.filter((l) => l.unitId === u.id), v = scoreForLessons(ls);
+      return `<div class="mastery-row"><div><strong>${esc(u.title)}</strong><span>${v}%</span></div><div class="progress"><i style="width:${v}%;background:${c.accent}"></i></div></div>`;
+    }).join("")}</div></article><aside class="performance-side"><article class="panel"><span class="eyebrow">GANHO DE APRENDIZAGEM</span><h2>Pré-teste × pós-estudo</h2>${preRows.length ? `<div class="gain-score"><strong>${learningGain >= 0 ? "+" : ""}${learningGain} p.p.</strong><span>Pré: ${preAvg}% · Pós: ${postAvg}% · ${preRows.length} lições comparáveis</span></div>` : '<p class="muted">Faça pré-testes e conclua lições para medir seu ganho real.</p>'}</article><article class="panel"><span class="eyebrow">VERSA PACE</span><h2>Gestão de tempo</h2><div class="pace-main"><strong>${pace.avgSeconds ? pace.avgSeconds + "s" : "—"}</strong><span>média por questão</span></div><p>Ritmo projetado para ${c.exam.questions} questões: <strong>${paceText}</strong>.</p>${pace.disciplines.slice(0,5).map((row)=>`<div class="pace-row"><span>${esc(row.name)}</span><b>${row.avgSeconds}s</b></div>`).join("") || '<small class="muted">O ritmo começa a ser estimado conforme você responde questões.</small>'}</article><article class="panel"><span class="eyebrow">ERROS POR CAUSA</span><h2>${activeErrors} ativos</h2>${Object.entries(errorStats.byType).sort((a,b)=>b[1]-a[1]).map(([key,value])=>`<div class="pace-row"><span>${esc(errorStats.labels[key] || key)}</span><b>${value}</b></div>`).join("") || '<p class="muted">Nenhum erro ativo.</p>'}</article></aside></div></section>`;
   }
   function library() {
     const c = course(),
@@ -26840,88 +27089,42 @@
     }<div class="page-head" style="margin-top:36px"><div><span class="eyebrow">BIBLIOGRAFIA E DOCUMENTOS</span><h2>Fontes curriculares</h2></div></div><div class="source-list">${c.resources.map((r, i) => { const url=safeExternalUrl(r.url); return `<article class="resource-row"><b>${i + 1}</b><div><strong>${esc(r.title)}</strong><small>${esc(r.type)}</small><p>${esc(r.description)}</p>${url!=="#" ? `<a class="secondary" href="${esc(url)}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" style="display:inline-block;margin-top:8px">Abrir material ↗</a>` : ""}</div></article>`; }).join("")}</div><article class="panel" style="margin-top:18px"><span class="eyebrow">FONTES DA TRILHA</span>${c.references.map((x) => `<p>✓ ${esc(x)}</p>`).join("")}<p>✓ Videoaulas externas em português — curadoria Versa Concursos, revisão ${esc(c.videoReviewDate || "não informada")}</p></article></section>`;
   }
   function resetDiag() {
-    state.diag = {
-      index: 0,
-      answers: [],
-      details: [],
-      selected: null,
-      done: false,
-    };
+    state.diag = { index: 0, answers: [], details: [], selected: null, confidence: null, startedAt: Date.now(), done: false };
   }
   function diagnostic() {
-    const c = course(),
-      ids = c.diagnosticIds;
+    const c = course(), ids = c.diagnosticIds;
     if (state.diag.done) {
       const correct = state.diag.answers.filter(Boolean).length,
         score = Math.round((correct / ids.length) * 100),
-        summary = window.VERSA_ADAPTIVE_ENGINE.diagnosticSummary(
-          c,
-          state.diag.details,
-        ),
-        priority = c.lessons.find(
-          (lesson) => lesson.id === summary.weakLessonIds[0],
-        );
-      const rows = summary.disciplines
-        .map(
-          (item) =>
-            `<div class="diagnostic-row"><span><strong>${esc(item.name)}</strong><small>${item.correct}/${item.total} acertos</small></span><div class="progress"><i style="width:${item.score}%;background:${c.accent}"></i></div><b>${item.score}%</b></div>`,
-        )
-        .join("");
-      return `<section class="diag"><div class="result diagnostic-result"><span class="eyebrow">DIAGNÓSTICO CONCLUÍDO</span><div class="score-circle" style="--score:${score * 3.6}deg"><strong>${score}%</strong></div><h1>${score >= 80 ? "Base sólida" : score >= 50 ? "Base parcial identificada" : "Começaremos pelos fundamentos"}</h1><p class="muted">O resultado agora alimenta seu mapa de domínio, caderno de erros e plano diário.</p><div class="diagnostic-breakdown">${rows}</div><div class="hero-actions">${priority ? `<button class="primary" data-lesson="${priority.id}">Estudar primeiro ponto fraco →</button>` : ""}<button class="secondary" data-view="performance">Ver mapa de domínio</button><button class="ghost" id="diag-reset">Refazer diagnóstico</button></div></div></section>`;
+        summary = window.VERSA_ADAPTIVE_ENGINE.diagnosticSummary(c, state.diag.details),
+        priority = c.lessons.find((lesson) => lesson.id === summary.weakLessonIds[0]);
+      const rows = summary.disciplines.map((item) => `<div class="diagnostic-row"><span><strong>${esc(item.name)}</strong><small>${item.correct}/${item.total} acertos</small></span><div class="progress"><i style="width:${item.score}%;background:${c.accent}"></i></div><b>${item.score}%</b></div>`).join("");
+      return `<section class="diag"><div class="result diagnostic-result"><span class="eyebrow">DIAGNÓSTICO CONCLUÍDO</span><div class="score-circle" style="--score:${score * 3.6}deg"><strong>${score}%</strong></div><h1>${score >= 80 ? "Base sólida" : score >= 50 ? "Base parcial identificada" : "Começaremos pelos fundamentos"}</h1><p class="muted">O resultado alimenta seu mapa de domínio, confiança, caderno de erros e plano diário.</p><div class="diagnostic-breakdown">${rows}</div><div class="hero-actions">${priority ? `<button class="primary" data-lesson="${priority.id}">Estudar primeiro ponto fraco →</button>` : ""}<button class="secondary" data-view="performance">Ver mapa de domínio</button><button class="ghost" id="diag-reset">Refazer diagnóstico</button></div></div></section>`;
     }
     const q = c.questions.find((x) => x.id === ids[state.diag.index]);
-    return `<section class="diag"><div class="diag-top"><span class="badge">${state.diag.index + 1}/${ids.length}</span><span class="muted">${esc(q.topic)}</span></div><div class="diag-card"><div class="progress" style="margin-bottom:20px"><i style="width:${(state.diag.index / ids.length) * 100}%"></i></div><h2>${esc(q.statement)}</h2>${questionExtras(c, q)}<div class="options">${q.options.map((o, i) => `<button class="option ${state.diag.selected === i ? "selected" : ""}" data-diag="${i}"><b class="letter">${String.fromCharCode(65 + i)}</b><span>${esc(o)}</span></button>`).join("")}</div><button class="primary" id="diag-next" ${state.diag.selected === null ? "disabled" : ""} style="margin-top:15px">${state.diag.index === ids.length - 1 ? "Ver resultado" : "Próxima questão"} →</button></div></section>`;
+    return `<section class="diag"><div class="diag-top"><span class="badge">${state.diag.index + 1}/${ids.length}</span><span class="muted">${esc(q.topic)}</span></div><div class="diag-card"><div class="progress" style="margin-bottom:20px"><i style="width:${(state.diag.index / ids.length) * 100}%"></i></div><h2>${esc(q.statement)}</h2>${questionExtras(c, q)}<div class="options">${q.options.map((o, i) => `<button class="option ${state.diag.selected === i ? "selected" : ""}" data-diag="${i}"><b class="letter">${String.fromCharCode(65 + i)}</b><span>${esc(o)}</span></button>`).join("")}</div><div class="confidence-box"><strong>Quão certo você está?</strong><div class="confidence-options">${Object.entries(window.VERSA_ADAPTIVE_ENGINE.confidence).map(([key,item])=>`<button class="confidence-btn ${state.diag.confidence === key ? "active" : ""}" data-diag-confidence="${key}">${esc(item.label)}</button>`).join("")}</div></div><button class="primary" id="diag-next" ${state.diag.selected === null || !state.diag.confidence ? "disabled" : ""} style="margin-top:15px">${state.diag.index === ids.length - 1 ? "Ver resultado" : "Próxima questão"} →</button></div></section>`;
   }
   function bindDiagnostic() {
-    $$("[data-diag]").forEach(
-      (b) =>
-        (b.onclick = () => {
-          state.diag.selected = Number(b.dataset.diag);
-          render();
-        }),
-    );
-    $("#diag-next")?.addEventListener("click", () => {
-      const c = course(),
-        ids = c.diagnosticIds,
+    $$('[data-diag]').forEach((b) => b.onclick = () => { state.diag.selected = Number(b.dataset.diag); render(); });
+    $$('[data-diag-confidence]').forEach((b) => b.onclick = () => { state.diag.confidence = b.dataset.diagConfidence; render(); });
+    $('#diag-next')?.addEventListener('click', () => {
+      const c = course(), ids = c.diagnosticIds,
         q = c.questions.find((x) => x.id === ids[state.diag.index]),
-        selected = state.diag.selected,
-        p = progress(),
-        correct = recordQuestionAttempt(p, q, selected, "diagnostic");
+        selected = state.diag.selected, p = progress(),
+        responseMs = Date.now() - (state.diag.startedAt || Date.now()),
+        correct = recordQuestionAttempt(p, q, selected, 'diagnostic', { confidence: state.diag.confidence, responseMs });
       state.diag.answers.push(correct);
-      state.diag.details.push({
-        questionId: q.id,
-        lessonId: q.lessonId,
-        selected,
-        correct,
-      });
-      state.diag.selected = null;
+      state.diag.details.push({ questionId: q.id, lessonId: q.lessonId, selected, correct, confidence: state.diag.confidence, responseMs });
+      state.diag.selected = null; state.diag.confidence = null; state.diag.startedAt = Date.now();
       if (state.diag.index === ids.length - 1) {
         state.diag.done = true;
-        const summary = window.VERSA_ADAPTIVE_ENGINE.diagnosticSummary(
-          c,
-          state.diag.details,
-        );
-        p.diagnostic = {
-          score: Math.round(
-            (state.diag.answers.filter(Boolean).length / ids.length) * 100,
-          ),
-          date: today(),
-          details: state.diag.details.slice(),
-          disciplines: summary.disciplines,
-          units: summary.units,
-          weakLessonIds: summary.weakLessonIds,
-        };
+        const summary = window.VERSA_ADAPTIVE_ENGINE.diagnosticSummary(c, state.diag.details);
+        p.diagnostic = { score: Math.round((state.diag.answers.filter(Boolean).length / ids.length) * 100), date: today(), details: state.diag.details.slice(), disciplines: summary.disciplines, units: summary.units, weakLessonIds: summary.weakLessonIds };
       } else state.diag.index++;
-      saveProgress(p);
-      render();
+      saveProgress(p); render();
     });
-    $("#diag-reset")?.addEventListener("click", () => {
-      resetDiag();
-      render();
-    });
+    $('#diag-reset')?.addEventListener('click', () => { resetDiag(); render(); });
   }
-
-  let simTimerHandle = null;
   function shuffled(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -26951,115 +27154,81 @@
   function pickQuestions(c, disc, n) {
     return shuffled(questionsByDiscipline(c, disc)).slice(0, n);
   }
+  function adaptiveMixedPool(c, n = 20) {
+    const p = progress(), mastery = window.VERSA_ADAPTIVE_ENGINE.courseMastery(c, p),
+      byLesson = new Map(mastery.lessons.map((item) => [item.lessonId, item])),
+      studied = new Set(mastery.lessons.filter((item) => item.status !== "not-started").map((item) => item.lessonId)),
+      base = c.questions.filter((q) => !q.historical && (studied.has(q.lessonId) || p.errors.some((e) => e.lessonId === q.lessonId && e.status !== "resolved")));
+    const fallback = base.length >= Math.min(10,n) ? base : c.questions.filter((q) => !q.historical);
+    return shuffled(fallback).sort((a,b) => {
+      const av = byLesson.get(a.lessonId), bv = byLesson.get(b.lessonId);
+      return ((av?.score ?? 100) - (bv?.score ?? 100)) || Math.random() - 0.5;
+    }).slice(0,n);
+  }
+  function transferPool(c, n = 10) {
+    const p = progress(), attempted = new Set((p.adaptive.attempts || []).map((item) => item.questionId)),
+      studied = new Set(p.completed || []),
+      fresh = c.questions.filter((q) => !q.historical && studied.has(q.lessonId) && !attempted.has(q.id)),
+      backup = c.questions.filter((q) => !q.historical && studied.has(q.lessonId));
+    return uniqueQuestions([...shuffled(fresh), ...shuffled(backup)]).slice(0,n);
+  }
+  function uniqueQuestions(items) {
+    const seen = new Set();
+    return items.filter((q) => q && !seen.has(q.id) && seen.add(q.id));
+  }
   function simPool(type) {
     const c = course();
+    if (type === "adaptive-mixed") return adaptiveMixedPool(c, 20);
+    if (type === "transfer") { const pool = transferPool(c, 10); return pool.length ? pool : adaptiveMixedPool(c, 10); }
     if (c.id === "ason") {
-      if (type === "humanas")
-        return [
-          ...pickQuestions(c, "Português", 10),
-          ...pickQuestions(c, "Inglês", 10),
-        ];
-      if (type === "exatas")
-        return [
-          ...pickQuestions(c, "Matemática", 10),
-          ...pickQuestions(c, "Física", 10),
-        ];
-      return [
-        ...pickQuestions(c, "Português", 10),
-        ...pickQuestions(c, "Inglês", 10),
-        ...pickQuestions(c, "Matemática", 10),
-        ...pickQuestions(c, "Física", 10),
-      ];
+      if (type === "humanas") return [...pickQuestions(c, "Português", 10), ...pickQuestions(c, "Inglês", 10)];
+      if (type === "exatas") return [...pickQuestions(c, "Matemática", 10), ...pickQuestions(c, "Física", 10)];
+      return [...pickQuestions(c, "Português", 10), ...pickQuestions(c, "Inglês", 10), ...pickQuestions(c, "Matemática", 10), ...pickQuestions(c, "Física", 10)];
     }
     if (c.id === "dataprev") {
       if (type.startsWith("dataprev-proof:")) {
-        const proofId = type.slice("dataprev-proof:".length);
-        const proofName =
-          proofId === "fgv2024"
-            ? "DATAPREV 2024 — FGV — Tipo 1"
-            : proofId === "cebraspe2023"
-              ? "DATAPREV 2023 — Cebraspe — Cargo 19"
-              : "";
-        return c.questions
-          .filter((q) => q.sourceProof === proofName)
-          .sort((a, b) => a.questionNumber - b.questionNumber);
+        const proofId = type.slice("dataprev-proof:".length), proofName = proofId === "fgv2024" ? "DATAPREV 2024 — FGV — Tipo 1" : proofId === "cebraspe2023" ? "DATAPREV 2023 — Cebraspe — Cargo 19" : "";
+        return c.questions.filter((q) => q.sourceProof === proofName).sort((a,b)=>a.questionNumber-b.questionNumber);
       }
-      if (type === "redes")
-        return pickQuestions(c, "Redes de Computadores", 20);
-      if (type === "seguranca")
-        return pickQuestions(c, "Segurança da Informação", 30);
-      if (type === "gerais")
-        return [
-          ...pickQuestions(c, "Português", 12),
-          ...pickQuestions(c, "Inglês", 12),
-          ...pickQuestions(c, "Raciocínio Lógico", 5),
-          ...pickQuestions(c, "Atualidades e IA", 6),
-          ...pickQuestions(c, "Legislação", 5),
-        ];
-      if (type === "especificos")
-        return [
-          ...pickQuestions(c, "Redes de Computadores", 6),
-          ...pickQuestions(c, "Segurança da Informação", 16),
-          ...pickQuestions(c, "Governança de TI", 4),
-          ...pickQuestions(c, "Computação em Nuvem", 4),
-        ];
-      if (type === "oficial")
-        return [
-          ...pickQuestions(c, "Português", 12),
-          ...pickQuestions(c, "Inglês", 12),
-          ...pickQuestions(c, "Raciocínio Lógico", 5),
-          ...pickQuestions(c, "Atualidades e IA", 6),
-          ...pickQuestions(c, "Legislação", 5),
-          ...pickQuestions(c, "Redes de Computadores", 6),
-          ...pickQuestions(c, "Segurança da Informação", 16),
-          ...pickQuestions(c, "Governança de TI", 4),
-          ...pickQuestions(c, "Computação em Nuvem", 4),
-        ];
+      if (type === "redes") return pickQuestions(c, "Redes de Computadores", 20);
+      if (type === "seguranca") return pickQuestions(c, "Segurança da Informação", 30);
+      if (type === "gerais") return [...pickQuestions(c, "Português", 12), ...pickQuestions(c, "Inglês", 12), ...pickQuestions(c, "Raciocínio Lógico", 5), ...pickQuestions(c, "Atualidades e IA", 6), ...pickQuestions(c, "Legislação", 5)];
+      if (type === "especificos") return [...pickQuestions(c, "Redes de Computadores", 6), ...pickQuestions(c, "Segurança da Informação", 16), ...pickQuestions(c, "Governança de TI", 4), ...pickQuestions(c, "Computação em Nuvem", 4)];
+      if (type === "oficial") return [...pickQuestions(c, "Português", 12), ...pickQuestions(c, "Inglês", 12), ...pickQuestions(c, "Raciocínio Lógico", 5), ...pickQuestions(c, "Atualidades e IA", 6), ...pickQuestions(c, "Legislação", 5), ...pickQuestions(c, "Redes de Computadores", 6), ...pickQuestions(c, "Segurança da Informação", 16), ...pickQuestions(c, "Governança de TI", 4), ...pickQuestions(c, "Computação em Nuvem", 4)];
     }
     if (c.id === "ibge") {
       if (type === "portugues") return pickQuestions(c, "Português", 15);
-      if (type === "logica")
-        return pickQuestions(c, "Raciocínio Lógico Quantitativo", 10);
-      if (type === "especificos")
-        return pickQuestions(c, "Conhecimentos Específicos", 35);
-      if (type === "historico2019")
-        return c.questions
-          .filter((q) => String(q.source || "").includes("IBGE 2019"))
-          .sort(
-            (a, b) =>
-              Number(a.id.match(/\d+$/)?.[0] || 0) -
-              Number(b.id.match(/\d+$/)?.[0] || 0),
-          );
-      if (type === "oficial")
-        return [
-          ...pickQuestions(c, "Português", 15),
-          ...pickQuestions(c, "Raciocínio Lógico Quantitativo", 10),
-          ...pickQuestions(c, "Conhecimentos Específicos", 35),
-        ];
+      if (type === "logica") return pickQuestions(c, "Raciocínio Lógico Quantitativo", 10);
+      if (type === "especificos") return pickQuestions(c, "Conhecimentos Específicos", 35);
+      if (type === "historico2019") return c.questions.filter((q) => String(q.source || "").includes("IBGE 2019")).sort((a,b)=>Number(a.id.match(/\d+$/)?.[0]||0)-Number(b.id.match(/\d+$/)?.[0]||0));
+      if (type === "oficial") return [...pickQuestions(c, "Português", 15), ...pickQuestions(c, "Raciocínio Lógico Quantitativo", 10), ...pickQuestions(c, "Conhecimentos Específicos", 35)];
+    }
+    if (c.id === "transpetro-cyber") {
+      if (type.startsWith("transpetro-proof:")) {
+        const proofId = type.slice("transpetro-proof:".length), proof = c.historicalProofs?.find((item) => item.id === proofId);
+        if (!proof) return [];
+        return c.questions.filter((q) => q.historical && q.sourceProof === proof.name).sort((a,b)=>Number(a.questionNumber||0)-Number(b.questionNumber||0));
+      }
+      if (type === "portugues") return pickQuestions(c, "Português", 10);
+      if (type === "ingles") return pickQuestions(c, "Inglês", 10);
+      if (type === "ofensiva") return pickQuestions(c, "Segurança Ofensiva", 20);
+      if (type === "defensiva") return pickQuestions(c, "Segurança Defensiva", 20);
+      if (type === "compliance") return pickQuestions(c, "Compliance e Privacidade", 10);
+      if (type === "especificos") return [...pickQuestions(c, "Segurança Ofensiva", 20), ...pickQuestions(c, "Segurança Defensiva", 20), ...pickQuestions(c, "Compliance e Privacidade", 10)];
+      if (type === "oficial") return [...pickQuestions(c, "Português", 10), ...pickQuestions(c, "Inglês", 10), ...pickQuestions(c, "Segurança Ofensiva", 20), ...pickQuestions(c, "Segurança Defensiva", 20), ...pickQuestions(c, "Compliance e Privacidade", 10)];
     }
     if (c.id === "cfaq") {
       if (type === "portugues") return pickQuestions(c, "Português", 20);
       if (type === "matematica") return pickQuestions(c, "Matemática", 20);
-      if (type === "completo")
-        return [
-          ...pickQuestions(c, "Português", 20),
-          ...pickQuestions(c, "Matemática", 20),
-        ];
-      if (type === "nacional80")
-        return [
-          ...pickQuestions(c, "Português", 40),
-          ...pickQuestions(c, "Matemática", 40),
-        ];
-      if (type.startsWith("cfaq-proof:")) {
-        const proof = type.slice("cfaq-proof:".length);
-        return c.questions.filter((q) =>
-          (q.sourceProofs || [q.sourceProof]).includes(proof),
-        );
-      }
+      if (type === "completo") return [...pickQuestions(c, "Português", 20), ...pickQuestions(c, "Matemática", 20)];
+      if (type === "nacional80") return [...pickQuestions(c, "Português", 40), ...pickQuestions(c, "Matemática", 40)];
+      if (type.startsWith("cfaq-proof:")) { const proof = type.slice("cfaq-proof:".length); return c.questions.filter((q) => (q.sourceProofs || [q.sourceProof]).includes(proof)); }
     }
     return shuffled(c.questions).slice(0, 10);
   }
   function simDuration(c, type) {
+    if (type === "adaptive-mixed") return 40 * 60;
+    if (type === "transfer") return 25 * 60;
     if (c.id === "ason" && type === "completo") return 4 * 60 * 60;
     if (c.id === "dataprev" && type === "oficial") return 4 * 60 * 60;
     if (c.id === "dataprev" && type.startsWith("dataprev-proof:"))
@@ -27068,6 +27237,15 @@
           (proof) => proof.id === type.slice("dataprev-proof:".length),
         )?.durationSeconds ||
         4 * 60 * 60
+      );
+    if (c.id === "transpetro-cyber" && type === "oficial")
+      return 4.5 * 60 * 60;
+    if (c.id === "transpetro-cyber" && type.startsWith("transpetro-proof:"))
+      return (
+        c.historicalProofs?.find(
+          (proof) => proof.id === type.slice("transpetro-proof:".length),
+        )?.durationSeconds ||
+        4.5 * 60 * 60
       );
     if (c.id === "ibge" && type === "oficial") return 4 * 60 * 60;
     if (c.id === "ibge" && type === "historico2019") return 2 * 60 * 60;
@@ -27089,22 +27267,26 @@
   }
   function startSim(type) {
     const c = course(),
-      exactHistorical = type.startsWith("dataprev-proof:"),
+      exactHistorical = type.startsWith("dataprev-proof:") || type.startsWith("transpetro-proof:"),
       source = simPool(type),
-      pool = exactHistorical
-        ? source.map((q) => ({ ...q, sourceId: q.id }))
-        : shuffled(source).map(cloneAndShuffleQuestion);
+      pool = exactHistorical ? source.map((q) => ({ ...q, sourceId: q.id })) : shuffled(source).map(cloneAndShuffleQuestion),
+      now = Date.now();
     state.sim = {
-      type,
-      pool,
-      index: 0,
+      type, pool, index: 0,
       responses: Array(pool.length).fill(null),
-      marked: [],
-      done: false,
-      startedAt: Date.now(),
+      responseMs: Array(pool.length).fill(null),
+      seenAt: Array(pool.length).fill(null),
+      marked: [], done: false, startedAt: now,
       durationSeconds: simDuration(c, type),
     };
+    if (pool.length) state.sim.seenAt[0] = now;
+    state.view = "simulation";
     render();
+  }
+  function setSimIndex(index) {
+    if (!state.sim) return;
+    state.sim.index = Math.max(0, Math.min(state.sim.pool.length - 1, Number(index) || 0));
+    if (!state.sim.seenAt[state.sim.index]) state.sim.seenAt[state.sim.index] = Date.now();
   }
   function simDiscipline(c, q) {
     const l = c.lessons.find((x) => x.id === q.lessonId),
@@ -27157,23 +27339,25 @@
     if (!state.sim || state.sim.done) return;
     state.sim.done = true;
     clearInterval(simTimerHandle);
-    const c = course(),
-      p = progress();
+    const c = course(), p = progress();
     state.sim.pool.forEach((q, i) => {
-      if (state.sim.responses[i] !== null)
-        recordQuestionAttempt(p, q, state.sim.responses[i], "simulation");
+      if (state.sim.responses[i] !== null) recordQuestionAttempt(p, q, state.sim.responses[i], state.sim.type === "transfer" ? "transfer" : state.sim.type === "adaptive-mixed" ? "mixed" : "simulation", {
+        responseMs: state.sim.responseMs[i],
+        transfer: state.sim.type === "transfer",
+      });
     });
-    const metrics = simulationMetrics(c, state.sim);
-    p.simulations.push({
-      type: state.sim.type,
-      score: metrics.pct,
-      points: Number(metrics.earned.toFixed(1)),
-      maxPoints: Number(metrics.max.toFixed(1)),
-      date: today(),
-    });
-    p.errors = p.errors.slice(-1000);
-    p.simulations = p.simulations.slice(-100);
+    state.sim.finishedAt = Date.now();
+    state.sim.elapsedSeconds = Math.round((state.sim.finishedAt - state.sim.startedAt) / 1000);
+    const metrics = simulationMetrics(c, state.sim), elapsedSeconds = state.sim.elapsedSeconds,
+      answeredTimes = state.sim.responseMs.filter(Number.isFinite),
+      avgResponseSeconds = answeredTimes.length ? Math.round(answeredTimes.reduce((a,b)=>a+b,0) / answeredTimes.length / 1000) : 0;
+    p.simulations.push({ type: state.sim.type, score: metrics.pct, points: Number(metrics.earned.toFixed(1)), maxPoints: Number(metrics.max.toFixed(1)), date: today(), elapsedSeconds, avgResponseSeconds });
+    p.errors = p.errors.slice(-1000); p.simulations = p.simulations.slice(-100);
     saveProgress(p);
+    if (state.smartSession && Number.isInteger(state.smartSession.currentIndex) && ["adaptive-mixed","transfer"].includes(state.sim.type)) {
+      if (!state.smartSession.completed.includes(state.smartSession.currentIndex)) state.smartSession.completed.push(state.smartSession.currentIndex);
+      state.smartSession.currentIndex = null;
+    }
     render();
   }
   function fmtTime(sec) {
@@ -27200,7 +27384,11 @@
         choices = `<button data-sim-start="humanas"><strong>Humanas</strong><small>20 questões · Português + Inglês</small></button><button data-sim-start="exatas"><strong>Exatas</strong><small>20 questões · Matemática + Física</small></button><button data-sim-start="completo"><strong>ASON completo</strong><small>40 questões · 4 horas</small></button>`;
       else if (c.id === "ibge")
         choices = `<button data-sim-start="portugues"><strong>Língua Portuguesa</strong><small>15 questões</small></button><button data-sim-start="logica"><strong>Raciocínio Lógico</strong><small>10 questões</small></button><button data-sim-start="especificos"><strong>Conhecimentos Específicos</strong><small>35 questões</small></button><button data-sim-start="historico2019"><strong>Bloco oficial IBGE 2019</strong><small>32 questões textuais integradas · 2 horas</small></button><button data-sim-start="oficial"><strong>IBGE oficial</strong><small>60 questões · 4 horas</small></button>`;
-      else if (c.id === "cfaq") {
+      else if (c.id === "transpetro-cyber") {
+        choices = `<button data-sim-start="transpetro-proof:transpetro2023"><strong>Prova oficial CESGRANRIO 2023.2</strong><small>70 questões · 10 Português + 10 Inglês + 50 específicas · 4h30</small></button><button data-sim-start="oficial"><strong>Modelo TRANSPETRO 2026.4 completo</strong><small>70 questões · 50 específicas + 10 Português + 10 Inglês · 4h30</small></button><button data-sim-start="especificos"><strong>Conhecimentos Específicos</strong><small>50 questões autorais · distribuição pedagógica 20 + 20 + 10</small></button><button data-sim-start="ofensiva"><strong>Segurança Ofensiva</strong><small>20 questões</small></button><button data-sim-start="defensiva"><strong>Segurança Defensiva</strong><small>20 questões</small></button><button data-sim-start="compliance"><strong>Compliance e Privacidade</strong><small>10 questões</small></button><button data-sim-start="portugues"><strong>Língua Portuguesa</strong><small>10 questões</small></button><button data-sim-start="ingles"><strong>Língua Inglesa</strong><small>10 questões</small></button>`;
+        note =
+          '<p class="muted">O modelo 2026.4 reproduz os quantitativos oficiais de 50 questões específicas, 10 de Português e 10 de Inglês. A divisão interna 20 Ofensiva + 20 Defensiva + 10 Compliance é um critério pedagógico do Versa, não um peso definido no edital. A prova histórica preserva o caderno oficial completo de 2023.2, com 70 questões.</p>';
+      } else if (c.id === "cfaq") {
         choices = `<button data-sim-start="portugues"><strong>Português</strong><small>20 questões · treino por disciplina</small></button><button data-sim-start="matematica"><strong>Matemática</strong><small>20 questões · treino por disciplina</small></button><button data-sim-start="completo"><strong>CFAQ-MOC completo</strong><small>40 questões · 20 Português + 20 Matemática</small></button><button data-sim-start="nacional80"><strong>Revisão nacional ampliada</strong><small>80 questões · banco misto de todas as provas</small></button>`;
         note =
           '<p class="muted">A distribuição 20 + 20 é uma referência de treino recorrente. Duração, etapas e critérios devem ser conferidos no edital da Capitania, Delegacia ou Agência responsável.</p>';
@@ -27210,7 +27398,8 @@
         note =
           '<p class="muted">As provas históricas preservam a ordem e as alternativas originais, usam gabaritos definitivos e omitem itens anulados. No Cebraspe: +1 por acerto, −1 por erro e 0 em branco. Os demais modos são treinos autorais embaralhados.</p>';
       }
-      return `<section><div class="page-head"><div><span class="eyebrow">PRÁTICA SOB TEMPO</span><h1>Simulados</h1><p>Questões e alternativas são embaralhadas. Você pode navegar, deixar em branco e marcar itens para revisão.</p>${note}</div></div><div class="sim-choice">${choices}</div>${filter}</section>`;
+      const masteryChoices = `<div class="adaptive-practice"><div><span class="eyebrow">PRÁTICA COGNITIVA</span><h2>Treinos que se adaptam ao que você já estudou</h2></div><div class="sim-choice smart-sim-choice"><button data-sim-start="adaptive-mixed"><strong>Prática intercalada</strong><small>20 questões misturadas · prioriza pontos fracos</small></button><button data-sim-start="transfer"><strong>Questões de transferência</strong><small>10 questões novas sobre conteúdos já estudados</small></button></div></div>`;
+      return `<section><div class="page-head"><div><span class="eyebrow">PRÁTICA SOB TEMPO</span><h1>Simulados</h1><p>Questões e alternativas são embaralhadas. Você pode navegar, deixar em branco e marcar itens para revisão.</p>${note}</div></div>${masteryChoices}<div class="sim-choice">${choices}</div>${filter}</section>`;
     }
     if (state.sim.done) {
       const { max, earned, correct, wrong, blank, pct } = simulationMetrics(
@@ -27239,9 +27428,28 @@
         c.id === "ibge" && state.sim.type === "oficial"
           ? correct >= 24 && disciplineScores.every((x) => x.ok >= 1)
           : null;
+      const transpetroScore = (discipline) =>
+        disciplineScores.find((item) => item.d === discipline)?.ok || 0;
+      const transpetroSpecific =
+        transpetroScore("Segurança Ofensiva") +
+        transpetroScore("Segurança Defensiva") +
+        transpetroScore("Compliance e Privacidade");
+      const transpetroGeneral =
+        transpetroScore("Português") + transpetroScore("Inglês");
+      const transpetroCriterion =
+        c.id === "transpetro-cyber" && state.sim.type === "oficial"
+          ? transpetroSpecific >= 25 &&
+            transpetroGeneral >= 10 &&
+            transpetroScore("Português") > 0 &&
+            transpetroScore("Inglês") > 0
+          : null;
       const officialNote =
-        c.id === "dataprev" && state.sim.type === "oficial"
-          ? `Pontuação ponderada: <strong>${earned.toFixed(1)} de ${max.toFixed(1)}</strong>.`
+        c.id === "transpetro-cyber" && state.sim.type === "oficial"
+          ? `Critério mínimo do edital: <strong>${transpetroCriterion ? "atingido" : "não atingido"}</strong> — ${transpetroSpecific}/50 em Específicos e ${transpetroGeneral}/20 em Gerais, sem nota zero em Português ou Inglês.`
+          : state.sim.type === "transpetro-proof:transpetro2023"
+            ? `Prova oficial CESGRANRIO 2023.2: <strong>${correct} de ${state.sim.pool.length}</strong> no caderno oficial completo.`
+          : c.id === "dataprev" && state.sim.type === "oficial"
+            ? `Pontuação ponderada: <strong>${earned.toFixed(1)} de ${max.toFixed(1)}</strong>.`
           : state.sim.type === "dataprev-proof:fgv2024"
             ? `Prova oficial FGV 2024: <strong>${earned.toFixed(1)} de ${max.toFixed(1)} pontos</strong>; a questão 13 anulada foi omitida.`
             : state.sim.type === "dataprev-proof:cebraspe2023"
@@ -27251,7 +27459,7 @@
             : c.id === "cfaq"
               ? `Treino nacional concluído. Confirme critérios eliminatórios e duração no edital do órgão local.`
               : "";
-      return `<section class="diag"><div class="result"><span class="eyebrow">SIMULADO CONCLUÍDO</span><div class="score-circle" style="--score:${pct * 3.6}deg"><strong>${pct}%</strong></div><h1>${correct} de ${state.sim.pool.length} questões</h1><p>${officialNote} Em branco: ${blank}.</p><div class="sim-result-grid"><div><span>Acertos</span><strong>${correct}</strong></div><div><span>Erros</span><strong>${wrong}</strong></div><div><span>Em branco</span><strong>${blank}</strong></div><div><span>Marcadas</span><strong>${state.sim.marked.length}</strong></div>${by}</div><button class="primary" id="sim-reset">Novo simulado</button></div></section>`;
+      return `<section class="diag"><div class="result"><span class="eyebrow">SIMULADO CONCLUÍDO</span><div class="score-circle" style="--score:${pct * 3.6}deg"><strong>${pct}%</strong></div><h1>${correct} de ${state.sim.pool.length} questões</h1><p>${officialNote} Em branco: ${blank}.</p><div class="sim-result-grid"><div><span>Acertos</span><strong>${correct}</strong></div><div><span>Erros</span><strong>${wrong}</strong></div><div><span>Em branco</span><strong>${blank}</strong></div><div><span>Marcadas</span><strong>${state.sim.marked.length}</strong></div>${by}</div><div class="sim-pace-result"><span>VERSA PACE</span><strong>${state.sim.responseMs.filter(Number.isFinite).length ? Math.round(state.sim.responseMs.filter(Number.isFinite).reduce((a,b)=>a+b,0)/state.sim.responseMs.filter(Number.isFinite).length/1000) + "s/questão" : "ritmo ainda não medido"}</strong><small>Tempo total decorrido: ${fmtTime(state.sim.elapsedSeconds || Math.round((Date.now()-state.sim.startedAt)/1000))}</small></div><button class="primary" id="sim-reset">Novo simulado</button></div></section>`;
     }
     const q = state.sim.pool[state.sim.index],
       selected = state.sim.responses[state.sim.index],
@@ -27283,26 +27491,28 @@
     $$("[data-sim-opt]").forEach(
       (b) =>
         (b.onclick = () => {
-          state.sim.responses[state.sim.index] = Number(b.dataset.simOpt);
+          const i = state.sim.index;
+          if (state.sim.responseMs[i] === null && state.sim.seenAt[i]) state.sim.responseMs[i] = Date.now() - state.sim.seenAt[i];
+          state.sim.responses[i] = Number(b.dataset.simOpt);
           render();
         }),
     );
     $$("[data-sim-jump]").forEach(
       (b) =>
         (b.onclick = () => {
-          state.sim.index = Number(b.dataset.simJump);
+          setSimIndex(Number(b.dataset.simJump));
           render();
         }),
     );
     $("#sim-prev")?.addEventListener("click", () => {
-      state.sim.index = Math.max(0, state.sim.index - 1);
+      setSimIndex(state.sim.index - 1);
       render();
     });
     $("#sim-next")?.addEventListener("click", () => {
-      if (state.sim.index < state.sim.pool.length - 1) state.sim.index++;
+      if (state.sim.index < state.sim.pool.length - 1) setSimIndex(state.sim.index + 1);
       else {
         const firstBlank = state.sim.responses.findIndex((x) => x === null);
-        state.sim.index = firstBlank >= 0 ? firstBlank : 0;
+        setSimIndex(firstBlank >= 0 ? firstBlank : 0);
       }
       render();
     });
@@ -27326,6 +27536,7 @@
     });
     $("#sim-reset")?.addEventListener("click", () => {
       state.sim = null;
+      if (state.smartSession) state.view = "studySession";
       render();
     });
     if (state.sim && !state.sim.done) {
@@ -27339,7 +27550,7 @@
   }
 
   function profilePage() {
-    return `<section><div class="page-head"><div><span class="eyebrow">PREFERÊNCIAS</span><h1>Seu perfil local</h1><p>O progresso permanece somente neste navegador e não é enviado ao Versa.</p></div></div><div class="privacy-notice"><strong>Privacidade por padrão</strong><p>Use um apelido. Não informe nome completo, CPF, e-mail, senha, telefone ou outros dados sensíveis. Este site não possui login, anúncios, telemetria ou cookies de rastreamento.</p></div><article class="panel settings"><label>Apelido<input id="pf-name" maxlength="50" autocomplete="nickname" value="${esc(state.profile.name)}"></label><label>Meta diária<select id="pf-time">${[20, 30, 45, 60, 90].map((v) => `<option value="${v}" ${v === state.profile.dailyMinutes ? "selected" : ""}>${v < 60 ? v + " minutos" : v === 60 ? "1 hora" : "1h30"}</option>`).join("")}</select></label><div class="toggle"><div><strong>Tema escuro</strong><small class="muted">Reduz luminosidade em ambientes escuros.</small></div><input id="pf-theme" type="checkbox" ${state.profile.theme === "dark" ? "checked" : ""}></div><button class="primary" id="pf-save">Salvar alterações</button><div style="border-top:1px solid var(--line);padding-top:15px"><strong>Apagar dados do Versa</strong><p class="muted">Remove somente o perfil, o progresso e os rascunhos locais pertencentes ao Versa.</p><button class="danger" id="pf-reset">Apagar dados do Versa</button></div></article></section>`;
+    return `<section><div class="page-head"><div><span class="eyebrow">PREFERÊNCIAS</span><h1>Seu perfil local</h1><p>O progresso permanece somente neste navegador e não é enviado ao Versa. O Mastery Engine usa apenas dados locais de estudo.</p></div></div><div class="privacy-notice"><strong>Privacidade por padrão</strong><p>Use um apelido. Não informe nome completo, CPF, e-mail, senha, telefone ou outros dados sensíveis. Este site não possui login, anúncios, telemetria ou cookies de rastreamento.</p></div><article class="panel settings"><label>Apelido<input id="pf-name" maxlength="50" autocomplete="nickname" value="${esc(state.profile.name)}"></label><label>Meta diária<select id="pf-time">${[20, 30, 45, 60, 90].map((v) => `<option value="${v}" ${v === state.profile.dailyMinutes ? "selected" : ""}>${v < 60 ? v + " minutos" : v === 60 ? "1 hora" : "1h30"}</option>`).join("")}</select></label><div class="toggle"><div><strong>Tema escuro</strong><small class="muted">Reduz luminosidade em ambientes escuros.</small></div><input id="pf-theme" type="checkbox" ${state.profile.theme === "dark" ? "checked" : ""}></div><button class="primary" id="pf-save">Salvar alterações</button><div style="border-top:1px solid var(--line);padding-top:15px"><strong>Apagar dados do Versa</strong><p class="muted">Remove somente o perfil, o progresso e os rascunhos locais pertencentes ao Versa.</p><button class="danger" id="pf-reset">Apagar dados do Versa</button></div></article></section>`;
   }
   function bindProfile() {
     $("#pf-save")?.addEventListener("click", () => {

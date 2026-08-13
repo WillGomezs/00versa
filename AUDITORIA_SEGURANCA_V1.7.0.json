@@ -1,0 +1,18 @@
+{
+  "version": "1.7.0",
+  "auditedAt": "2026-08-13",
+  "status": "static-passed-dynamic-pending",
+  "staticChecks": {
+    "cspRestrictive": true,
+    "referrerNoReferrer": true,
+    "localScriptsOnly": true,
+    "evalAbsent": true,
+    "newFunctionAbsent": true,
+    "documentWriteAbsent": true,
+    "javascriptSyntax": "passed"
+  },
+  "dynamicDomAudit": {
+    "status": "not-run",
+    "reason": "jsdom unavailable in this container"
+  }
+}

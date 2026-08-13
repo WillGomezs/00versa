@@ -17,7 +17,12 @@ const sandbox = { window: {} };
 vm.runInNewContext(fs.readFileSync(path.join(root, 'adaptive-engine.js'), 'utf8'), sandbox, { filename:'adaptive-engine.js' });
 const engine = sandbox.window.VERSA_ADAPTIVE_ENGINE;
 assert(Boolean(engine), 'Motor adaptativo carregado');
-assert(engine.version === '1.5.0', 'Versão do motor adaptativo registrada');
+assert(engine.version === '2.0.0', 'Versão do Mastery Engine registrada');
+assert(engine.statuses['not-started'].label === 'Desconhecido', 'Estado inicial usa linguagem de maestria');
+assert(engine.statuses.learning.label === 'Familiar', 'Estado familiar disponível');
+assert(engine.statuses.consolidating.label === 'Recuperável', 'Estado recuperável disponível');
+assert(engine.statuses.mastered.label === 'Consolidado', 'Estado consolidado disponível');
+assert(Boolean(engine.confidence.high && engine.errorTypes['erro-convicto']), 'Metacognição e erro convicto disponíveis');
 
 const course = {
   id:'teste',
@@ -39,8 +44,8 @@ baseProgress.scores.l1 = 45;
 assert(engine.lessonMastery(course, baseProgress, course.lessons[0]).status === 'learning', 'Nota baixa gera estado em aprendizagem');
 
 baseProgress.scores.l1 = 90;
-baseProgress.adaptive = engine.recordAttempt(baseProgress.adaptive, { kind:'lesson', questionId:'q1', lessonId:'l1', correct:true, selected:0, date:'2026-08-01' });
-baseProgress.adaptive = engine.recordAttempt(baseProgress.adaptive, { kind:'review', questionId:'q2', lessonId:'l1', correct:true, selected:1, date:'2026-08-04' });
+baseProgress.adaptive = engine.recordAttempt(baseProgress.adaptive, { kind:'lesson', questionId:'q1', lessonId:'l1', correct:true, selected:0, date:'2026-08-01', confidence:'high', responseMs:45000 });
+baseProgress.adaptive = engine.recordAttempt(baseProgress.adaptive, { kind:'review', questionId:'q2', lessonId:'l1', correct:true, selected:1, date:'2026-08-04', confidence:'medium', responseMs:50000 });
 assert(engine.lessonMastery(course, baseProgress, course.lessons[0]).status === 'mastered', 'Domínio exige bom resultado e confirmação espaçada');
 
 baseProgress.errors.push({ questionId:'q3', lessonId:'l1', status:'active' });
@@ -74,7 +79,7 @@ const appSandbox = {
   document:{ getElementById:()=>({}), querySelector:()=>null, querySelectorAll:()=>[], activeElement:null },
   console,
 };
-for (const filename of ['cfaq-data.js','dataprev-history-data.js','flashcards-priority-data.js','flashcards-data.js','flashcards-engine.js','adaptive-engine.js']) {
+for (const filename of ['cfaq-data.js','dataprev-history-data.js','transpetro-cyber-data.js','flashcards-priority-data.js','flashcards-data.js','flashcards-engine.js','adaptive-engine.js']) {
   vm.runInNewContext(fs.readFileSync(path.join(root, filename), 'utf8'), appSandbox, { filename });
 }
 let main = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
@@ -93,6 +98,18 @@ for (const [courseId, currentCourse] of Object.entries(appSandbox.window.__COURS
   assert(currentPlan.priorityLessonId, `Prioridade inicial definida para ${courseId}`);
 }
 
-const payload = { status:failures.length ? 'failed' : 'passed', checks, failures, summary:{ engine:engine.version, courses:4, migration:'preserved', dailyPlan:'passed', mastery:'passed', diagnostic:'passed' } };
+const metacog = { ...baseProgress, errors:[{ questionId:'qx', lessonId:'l1', status:'active', category:'erro-convicto' }] };
+const eSummary = engine.errorSummary(metacog);
+assert(eSummary.conviction === 1, 'Erro convicto recebe contagem própria');
+const paceProgress = { ...baseProgress, adaptive:engine.normalizeStore(null) };
+paceProgress.adaptive = engine.recordAttempt(paceProgress.adaptive, { kind:'lesson', questionId:'p1', lessonId:'l1', correct:true, selected:0, confidence:'high', responseMs:60000, date:'2026-08-01' });
+const pace = engine.paceSummary(course, paceProgress);
+assert(pace.avgSeconds === 60, 'Versa Pace calcula tempo médio de resposta');
+assert(pace.projectedSeconds === 0, 'Projeção depende do quantitativo de prova quando não informado');
+assert(engine.calibrationScore(paceProgress.adaptive.attempts) === 100, 'Calibração recompensa acerto com alta confiança');
+const wrongHigh = engine.calibrationScore([engine.normalizeStore({attempts:[{kind:'lesson',questionId:'w',lessonId:'l1',correct:false,selected:0,confidence:'high',responseMs:30000,date:'2026-08-01'}]}).attempts[0]]);
+assert(wrongHigh < 20, 'Erro com alta confiança é penalizado na calibração');
+
+const payload = { status:failures.length ? 'failed' : 'passed', checks, failures, summary:{ engine:engine.version, courses:5, migration:'preserved', dailyPlan:'passed', mastery:'passed', metacognition:'passed', pace:'passed', diagnostic:'passed' } };
 console.log(JSON.stringify(payload, null, 2));
 if (failures.length) process.exit(1);

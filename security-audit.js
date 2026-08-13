@@ -4,14 +4,14 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
-const { JSDOM, VirtualConsole, requestInterceptor } = require('jsdom');
+const { JSDOM, VirtualConsole, ResourceLoader } = require('jsdom');
 
 const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const html = read('index.html');
 const app = read('app.js');
 const bootstrap = read('security-bootstrap.js');
-const runtime = [html, app, bootstrap, read('dataprev-history-data.js'), read('flashcards-engine.js'), read('adaptive-engine.js')].join('\n');
+const runtime = [html, app, bootstrap, read('dataprev-history-data.js'), read('transpetro-cyber-data.js'), read('flashcards-engine.js'), read('adaptive-engine.js')].join('\n');
 const checks = [];
 const failures = [];
 const assert = (condition, label) => {
@@ -65,14 +65,15 @@ const server = http.createServer((request, response) => {
   virtualConsole.on('error', (message) => errors.push(String(message)));
   const attack = '<img id="pwn" src=x onerror="window.__pwned=1">';
   const dom = await JSDOM.fromURL(origin + '/', {
-    resources: {
-      interceptors: [requestInterceptor((request) => {
-        if (!request.url.startsWith(origin)) {
-          external.push(request.url);
-          return new Response('', { status: 204 });
+    resources: new (class extends ResourceLoader {
+      fetch(url, options) {
+        if (!url.startsWith(origin)) {
+          external.push(url);
+          return Promise.resolve(Buffer.alloc(0));
         }
-      })],
-    },
+        return super.fetch(url, options);
+      }
+    })(),
     runScripts: 'dangerously',
     pretendToBeVisual: true,
     virtualConsole,
@@ -129,7 +130,7 @@ const server = http.createServer((request, response) => {
   };
   if (!failures.length) {
     fs.writeFileSync(
-      path.join(root, 'AUDITORIA_SEGURANCA_V1.6.0.json'),
+      path.join(root, 'AUDITORIA_SEGURANCA_V1.8.1.json'),
       JSON.stringify(payload, null, 2) + '\n',
     );
   }

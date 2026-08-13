@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 260" role="img" aria-labelledby="title desc">
+  <title id="title">Diagrama BPMN da questão 119</title>
+  <desc id="desc">A Tarefa 1 leva a um gateway paralelo, que abre os caminhos das Tarefas 2 e 3. Outro gateway paralelo reúne os caminhos antes da Tarefa 4.</desc>
+  <g fill="none" stroke="#273733" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="55" cy="130" r="24"/>
+    <path d="M79 130h61M270 130h55M375 130V60h65M375 130v70h65M590 60h55v70M590 200h55v-70M695 130h55M860 130h-55"/>
+    <rect x="140" y="90" width="130" height="80" rx="12"/>
+    <rect x="440" y="20" width="150" height="80" rx="12"/>
+    <rect x="440" y="160" width="150" height="80" rx="12"/>
+    <rect x="750" y="90" width="110" height="80" rx="12"/>
+    <path d="M350 105l25 25-25 25-25-25zM670 105l25 25-25 25-25-25z" fill="#fff"/>
+    <path d="M350 116v28M336 130h28M670 116v28M656 130h28"/>
+    <circle cx="890" cy="130" r="24"/>
+    <path d="M128 120l12 10-12 10M428 50l12 10-12 10M428 190l12 10-12 10M738 120l12 10-12 10M873 120l12 10-12 10" fill="#273733"/>
+  </g>
+  <g fill="#273733" font-family="Arial, sans-serif" font-size="22" text-anchor="middle">
+    <text x="205" y="137">Tarefa 1</text>
+    <text x="515" y="55">#2</text><text x="515" y="82">Tarefa 2</text>
+    <text x="515" y="195">#3</text><text x="515" y="222">Tarefa 3</text>
+    <text x="805" y="137">Tarefa 4</text>
+  </g>
+</svg>

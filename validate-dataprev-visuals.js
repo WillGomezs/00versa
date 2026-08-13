@@ -1,0 +1,42 @@
+const fs = require('fs');
+const vm = require('vm');
+const path = require('path');
+const root = path.join(__dirname, '..');
+const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const visualCode = fs.readFileSync(path.join(root, 'dataprev-visuals.js'), 'utf8');
+const sandbox = { window: {} };
+vm.createContext(sandbox);
+vm.runInContext(visualCode, sandbox);
+const visuals = sandbox.window.VERSA_DATAPREV_VISUALS;
+let checks = 0;
+function ok(cond, msg) { checks++; if (!cond) throw new Error(msg); }
+ok(visuals && typeof visuals === 'object', 'Catálogo visual não foi exposto.');
+const build = app.slice(0, app.indexOf('    return {\n      id: "dataprev"'));
+const ids = [];
+for (const m of build.matchAll(/L\(\s*"([^"]+)",\s*"[^"]+",\s*\d+,\s*"[^"]+"/gs)) ids.push(m[1]);
+for (const m of build.matchAll(/\{\s*id:\s*"([^"]+)",\s*unitId:\s*"[^"]+",\s*order:\s*\d+,\s*title:\s*"[^"]+"/gs)) ids.push(m[1]);
+ok(ids.length === 77, `Esperadas 77 microlições DATAPREV; encontradas ${ids.length}.`);
+ok(Object.keys(visuals).length === ids.length, 'Quantidade de visuais difere da quantidade de microlições.');
+for (const id of ids) {
+  const v = visuals[id];
+  ok(Boolean(v), `Sem visual para ${id}.`);
+  ok(typeof v.title === 'string' && v.title.length >= 5, `Título visual inválido em ${id}.`);
+  ok(typeof v.caption === 'string' && v.caption.length >= 10, `Legenda visual inválida em ${id}.`);
+  ok(Array.isArray(v.items) && v.items.length >= 1, `Itens visuais ausentes em ${id}.`);
+  ok(Array.isArray(v.steps) && v.steps.length >= 3, `Passos guiados insuficientes em ${id}.`);
+  v.steps.forEach((step, i) => ok(typeof step === 'string' && step.length >= 8, `Passo ${i + 1} muito curto em ${id}.`));
+}
+const supported = ['flow','hub','switch','ap','compare','topology','stack','packet','grid','timeline','mapping','address','split','table','bars','triangle','cycle'];
+for (const [id, v] of Object.entries(visuals)) ok(supported.includes(v.type), `Tipo visual não suportado em ${id}: ${v.type}`);
+ok(app.includes('function dataprevVisualSection(c, l)'), 'Renderer DATAPREV ausente.');
+ok(app.includes('${dataprevVisualSection(c, l)}'), 'Renderer visual não foi inserido na aula.');
+ok(app.includes("$$('[data-visual-step]')"), 'Binding dos passos visuais ausente.');
+ok(css.includes('.dataprev-visual'), 'CSS visual principal ausente.');
+ok(css.includes('.visual-active'), 'CSS de destaque guiado ausente.');
+ok(css.includes('@media(max-width:760px)'), 'Responsividade visual não detectada.');
+const vpos = index.indexOf('dataprev-visuals.js');
+const apos = index.indexOf('app.js');
+ok(vpos > 0 && apos > vpos, 'dataprev-visuals.js deve carregar antes de app.js.');
+console.log(`DATAPREV Visual Learning: ${checks} verificações aprovadas · ${ids.length} microlições com visual.`);

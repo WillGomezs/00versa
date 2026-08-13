@@ -1,6 +1,6 @@
 # Publicação segura no GitHub Pages
 
-Este guia considera o pacote Versa Concursos v1.6.0.
+Este guia considera o pacote Versa Concursos v1.8.1.
 
 ## Antes de enviar
 
@@ -24,7 +24,7 @@ Este guia considera o pacote Versa Concursos v1.6.0.
 2. Abra **Settings > Pages**.
 3. Em **Build and deployment**, escolha **Deploy from a branch**, `main` e `/(root)`.
 4. Depois que o certificado estiver disponível, marque **Enforce HTTPS**. O GitHub informa que essa opção redireciona acessos HTTP para HTTPS e impede interceptação ou alteração do tráfego em trânsito.
-5. Abra o endereço publicado em janela anônima e confirme trilhas, plano diário, mapa de domínio, flashcards, imagens e exclusão dos dados locais.
+5. Abra o endereço publicado em janela anônima e confirme trilhas, pré-teste, confiança, recuperação aberta, plano diário, sessão guiada, mapa de domínio, Versa Pace, flashcards, simulados, imagens e exclusão dos dados locais.
 
 Documentação oficial: [GitHub — proteger um site Pages com HTTPS](https://docs.github.com/en/pages/getting-started-with-github-pages/securing-your-github-pages-site-with-https), [segurança da conta](https://docs.github.com/en/code-security/tutorials/implement-supply-chain-best-practices/securing-accounts) e [prevenção de vazamento de dados](https://docs.github.com/en/enterprise-cloud@latest/code-security/tutorials/secure-your-organization/prevent-data-leaks).
 

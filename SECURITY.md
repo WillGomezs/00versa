@@ -2,7 +2,7 @@
 
 ## Versão suportada
 
-A versão mantida é a **1.6.x**. Versões anteriores não contêm todas as proteções e validações descritas na auditoria atual.
+A versão mantida é a **1.8.x**. Versões anteriores não contêm todas as proteções e validações descritas na auditoria atual.
 
 ## Como relatar uma vulnerabilidade
 
@@ -18,10 +18,15 @@ Se um segredo já tiver sido publicado, removê-lo do arquivo não é suficiente
 
 ## Regras de manutenção
 
-- executar `npm test` e `npm audit --package-lock-only` antes de cada publicação;
-- revisar mudanças em `index.html`, `app.js`, `security-bootstrap.js` e na política CSP;
+- executar `npm run test:static`; quando `jsdom` estiver disponível, executar também `npm test`; executar `npm audit --package-lock-only` antes de cada publicação;
+- revisar mudanças em `index.html`, `app.js`, `adaptive-engine.js`, `security-bootstrap.js` e na política CSP;
 - não adicionar analytics, formulários, login, API, iframe ou script externo sem nova avaliação de risco e privacidade;
 - manter imagens externas restritas a `i.ytimg.com` e aplicar `no-referrer` às thumbnails;
 - nunca armazenar segredos no repositório;
 - habilitar 2FA, HTTPS obrigatório, alertas do Dependabot e varredura de segredos no GitHub;
 - verificar o SHA-256 do pacote recebido antes da publicação.
+
+
+## v1.8.1 — Visual Learning DATAPREV
+
+Os demonstrativos visuais são renderizados exclusivamente com dados estáticos locais em `dataprev-visuals.js` e HTML/CSS. Não foram adicionadas bibliotecas, iframes, APIs, pixels, analytics ou requisições externas. Os textos do catálogo passam pela função de escape da aplicação antes de serem inseridos na interface.

@@ -1,4 +1,45 @@
+# v1.8.1 — Visual Learning DATAPREV
+
+- Adiciona 77 demonstrativos visuais, um para cada microlição DATAPREV (Redes + Segurança da Informação).
+- Introduz fluxos, pilhas, comparações, topologias, mapeamentos, endereçamento, tabelas, ciclos e linhas do tempo em HTML/CSS.
+- Adiciona exploração guiada em 3 etapas com destaque visual e texto de orientação.
+- Mantém conteúdo, questões, Mastery Engine e progresso anterior sem migração destrutiva.
+- Visuais locais e responsivos: sem novas dependências externas e sem coleta de dados.
+
 # Changelog
+
+## Mastery Engine e aprendizagem interativa v1.8.0 — 13/08/2026
+
+- Mantida compatibilidade com todo o progresso da v1.7.1; novos campos são opcionais e normalizados localmente.
+- Evoluído o motor adaptativo para **Mastery Engine v2.0.0**, com quatro estados: Desconhecido, Familiar, Recuperável e Consolidado.
+- Adicionado pré-teste de uma questão no primeiro acesso de cada microlição, com opção persistente de pular; erros de pré-teste não entram no caderno de erros.
+- Adicionada recuperação aberta sem alternativas; o rascunho não é persistido e a autocorreção usa os pontos-chave da própria microlição.
+- Adicionada confiança antes da correção (Chutei, Pouco certo, Certo, Muito certo).
+- Criado marcador **erro convicto** para respostas erradas com alta confiança e priorização máxima no plano adaptativo.
+- Criado Caderno de Erros 2.0 com causas: conteúdo, confusão conceitual, interpretação, desatenção, chute e procedimento.
+- Todas as questões de microlição passam a oferecer revisão alternativa por alternativa depois da correção.
+- Adicionados treinos de prática intercalada e transferência com questões ainda não vistas sempre que disponíveis.
+- Adicionado **Versa Pace** com tempo médio por questão, ritmo por disciplina e projeção para o quantitativo oficial da prova.
+- Adicionado comparativo pré-teste × pós-estudo no painel quando houver evidências comparáveis.
+- Criado **Estudar agora**, com sessões guiadas de 20, 30, 45 ou 60 minutos.
+- O plano diário passa a combinar erro convicto, risco de esquecimento, ponto fraco, conteúdo novo, interleaving e flashcards.
+- Criado `tools/validate-mastery-ui.js` para validar os novos mecanismos sem depender de backend.
+- Criado `tools/validate-render-templates.js` para renderizar os nove templates centrais nas cinco trilhas sem depender de `jsdom`; 57 verificações aprovadas.
+- O rascunho da recuperação aberta permanece visível apenas na memória da sessão após revelar os pontos-chave e nunca é persistido no navegador.
+- Preservadas as cinco trilhas, 405 microlições, 505 flashcards, 1.533 questões e 237 recursos audiovisuais da v1.7.1.
+
+## Fechamento editorial TRANSPETRO Cyber v1.7.1 — 13/08/2026
+
+- Corrigidos metadados e documentação geral para cinco trilhas e versão v1.7.1.
+- Corrigido o carregamento da quinta trilha no `index.html`, incluindo `transpetro-cyber-data.js` antes da geração de flashcards.
+- Banco autoral TRANSPETRO ampliado de 75 para 128 questões; cada uma das 64 microlições passou a ter ao menos duas questões autorais.
+- Banco total da trilha ampliado para 198 questões, mantendo intactas as 70 questões e os gabaritos históricos da Prova 5 de 2023.2.
+- Adicionados feedbacks individualizados para as cinco alternativas de todas as 198 questões, totalizando 990 comentários de alternativa.
+- Removidos os feedbacks genéricos legados da trilha TRANSPETRO.
+- Curadoria audiovisual refeita com 40 videoaulas diretas e mapeadas às microlições; páginas de busca deixaram de ser tratadas como aula.
+- Catálogo global ampliado para 237 recursos; banco global passou a 1.533 questões, mantendo 505 flashcards.
+- Validadores atualizados para conferir quantidade, integridade histórica, profundidade do banco autoral, feedback por alternativa e curadoria direta.
+- Preparados novos relatórios de validação, curadoria, fechamento e auditoria para v1.7.1.
 
 ## Banco histórico oficial DATAPREV v1.6.0 — 09/08/2026
 
